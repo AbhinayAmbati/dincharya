@@ -20,9 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import com.dincharya.app.R
 import com.dincharya.app.ui.components.EmptyState
@@ -40,11 +38,9 @@ import java.util.Locale
  */
 @Composable
 fun InsightsScreen(navController: NavController) {
-    val viewModel: InsightsViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer { InsightsViewModel(this[APPLICATION_KEY] as android.app.Application) }
-        }
-    )
+    // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
+    // subclasses automatically, so no explicit factory is needed.
+    val viewModel: InsightsViewModel = viewModel()
     val state by viewModel.uiState.collectAsState()
 
     Column(

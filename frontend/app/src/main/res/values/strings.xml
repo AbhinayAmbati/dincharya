@@ -15,6 +15,7 @@
     <string name="section_overdue">Overdue</string>
     <string name="section_upcoming">Today</string>
     <string name="section_anytime">Anytime</string>
+    <string name="section_later">Later</string>
     <string name="section_done_today">Done today</string>
     <string name="momentum_label">Momentum</string>
     <string name="momentum_none">Complete a task to start building momentum</string>

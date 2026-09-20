@@ -28,9 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import com.dincharya.app.R
 import com.dincharya.app.data.TaskCategory
@@ -43,11 +41,9 @@ import com.dincharya.app.ui.components.SectionHeader
  */
 @Composable
 fun AddTaskScreen(navController: NavController) {
-    val viewModel: AddTaskViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer { AddTaskViewModel(this[APPLICATION_KEY] as android.app.Application) }
-        }
-    )
+    // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
+    // subclasses automatically, so no explicit factory is needed.
+    val viewModel: AddTaskViewModel = viewModel()
 
     val scroll = rememberScrollState()
 

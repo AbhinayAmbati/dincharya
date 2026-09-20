@@ -19,9 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import com.dincharya.app.R
 import com.dincharya.app.ui.components.SectionHeader
@@ -32,11 +30,9 @@ import com.dincharya.app.ui.components.SectionHeader
  */
 @Composable
 fun ReviewScreen(navController: NavController) {
-    val viewModel: ReviewViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer { ReviewViewModel(this[APPLICATION_KEY] as android.app.Application) }
-        }
-    )
+    // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
+    // subclasses automatically, so no explicit factory is needed.
+    val viewModel: ReviewViewModel = viewModel()
     val state by viewModel.uiState.collectAsState()
 
     Column(

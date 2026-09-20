@@ -25,8 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.navigation.NavController
 import com.dincharya.app.R
 import com.dincharya.app.data.TaskEntity
@@ -46,16 +44,23 @@ import com.dincharya.app.ui.navigation.Screen
  */
 @Composable
 fun TodayScreen(navController: NavController) {
-    val viewModel: TodayViewModel = viewModel(
-        factory = viewModelFactory {
-            // APPLICATION_KEY is the Application instance, provided by Android.
-            initializer { TodayViewModel(this[APPLICATION_KEY] as android.app.Application) }
-        }
-    )
+    // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
+    // subclasses automatically, so no explicit factory is needed.
+    val viewModel: TodayViewModel = viewModel()
     val state by viewModel.uiState.collectAsState()
 
     // Task pending deletion — wired to a confirmation dialog below.
     var taskToDelete by remember { mutableStateOf<TaskEntity?>(null) }
+
+    // Section titles are resolved HERE, in a composable context: the
+    // LazyColumn content lambda below is NOT composable, so stringResource()
+    // may not be called inside it directly.
+    val overdueTitle = stringResource(R.string.section_overdue)
+    val upcomingTitle = stringResource(R.string.section_upcoming)
+    val anytimeTitle = stringResource(R.string.section_anytime)
+    val laterTitle = stringResource(R.string.section_later)
+    val doneTitle = stringResource(R.string.section_done_today)
+    val deleteLabel = stringResource(R.string.task_delete)
 
     Column(modifier = Modifier.fillMaxSize()) {
         // ---- Header ----
@@ -106,7 +111,7 @@ fun TodayScreen(navController: NavController) {
                     }
                 }
 
-                taskSection(stringResource(R.string.section_overdue), state.overdue) { task ->
+                taskSection(overdueTitle, state.overdue) { task ->
                     TaskRow(
                         task = task,
                         onToggleComplete = { viewModel.completeTask(task) },
@@ -114,7 +119,7 @@ fun TodayScreen(navController: NavController) {
                         onDelete = { taskToDelete = task },
                     )
                 }
-                taskSection(stringResource(R.string.section_upcoming), state.upcoming) { task ->
+                taskSection(upcomingTitle, state.upcoming) { task ->
                     TaskRow(
                         task = task,
                         onToggleComplete = { viewModel.completeTask(task) },
@@ -122,7 +127,7 @@ fun TodayScreen(navController: NavController) {
                         onDelete = { taskToDelete = task },
                     )
                 }
-                taskSection(stringResource(R.string.section_anytime), state.anytime) { task ->
+                taskSection(anytimeTitle, state.anytime) { task ->
                     TaskRow(
                         task = task,
                         onToggleComplete = { viewModel.completeTask(task) },
@@ -130,7 +135,7 @@ fun TodayScreen(navController: NavController) {
                         onDelete = { taskToDelete = task },
                     )
                 }
-                taskSection("Later", state.later) { task ->
+                taskSection(laterTitle, state.later) { task ->
                     TaskRow(
                         task = task,
                         onToggleComplete = { viewModel.completeTask(task) },
@@ -138,7 +143,7 @@ fun TodayScreen(navController: NavController) {
                         onDelete = { taskToDelete = task },
                     )
                 }
-                taskSection(stringResource(R.string.section_done_today), state.completedToday) { task ->
+                taskSection(doneTitle, state.completedToday) { task ->
                     TaskRow(
                         task = task,
                         onToggleComplete = { viewModel.completeTask(task) },
@@ -160,7 +165,7 @@ fun TodayScreen(navController: NavController) {
                 TextButton(onClick = {
                     viewModel.deleteTask(task)
                     taskToDelete = null
-                }) { Text("Delete") }
+                }) { Text(deleteLabel) }
             },
             dismissButton = {
                 TextButton(onClick = { taskToDelete = null }) {

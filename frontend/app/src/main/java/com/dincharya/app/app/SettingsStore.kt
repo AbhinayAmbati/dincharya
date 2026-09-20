@@ -23,7 +23,7 @@ class SettingsStore(context: Context) {
         get() = prefs.getString(KEY_THEME, THEME_SYSTEM) ?: THEME_SYSTEM
         set(value) {
             prefs.edit().putString(KEY_THEME, value).apply()
-            themeModeState.value = value
+            themeModeState = value
         }
 
     /** Observable mirror of [themeMode] for Compose. */

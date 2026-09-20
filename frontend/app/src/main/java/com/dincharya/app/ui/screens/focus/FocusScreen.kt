@@ -27,9 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import com.dincharya.app.R
 import com.dincharya.app.ui.components.EmptyState
@@ -46,11 +44,9 @@ import kotlinx.coroutines.isActive
  */
 @Composable
 fun FocusScreen(navController: NavController) {
-    val viewModel: FocusViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer { FocusViewModel(this[APPLICATION_KEY] as android.app.Application) }
-        }
-    )
+    // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
+    // subclasses automatically, so no explicit factory is needed.
+    val viewModel: FocusViewModel = viewModel()
     val pending by viewModel.pendingTasks.collectAsState()
     val selected = viewModel.selectedTask
 

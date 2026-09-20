@@ -23,9 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import com.dincharya.app.R
 import com.dincharya.app.app.SettingsStore
@@ -42,11 +40,9 @@ private const val APP_VERSION = "0.1.0"
  */
 @Composable
 fun SettingsScreen(navController: NavController) {
-    val viewModel: SettingsViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer { SettingsViewModel(this[APPLICATION_KEY] as android.app.Application) }
-        }
-    )
+    // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
+    // subclasses automatically, so no explicit factory is needed.
+    val viewModel: SettingsViewModel = viewModel()
 
     // Local mirrors so the switches feel instant while persisting.
     var themeMode by remember { mutableStateOf(viewModel.themeMode) }
