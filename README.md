@@ -39,6 +39,10 @@ bash ./gradlew testDebugUnitTest     # run the unit tests
 
 The built APK lands in `frontend/app/build/outputs/apk/debug/app-debug.apk`.
 
+The first `gradlew` invocation is slower: it downloads the Gradle wrapper
+JAR (pinned to the official Gradle repository) and the Gradle distribution
+itself — a one-time ~120 MB fetch. Every later build is cached.
+
 ## CI / CD
 
 Every push to any branch runs `.github/workflows/android-build.yml`:
@@ -59,8 +63,9 @@ git remote add origin git@github.com:<your-user>/dincharya.git
 git push -u origin main
 ```
 
-If `bash ./gradlew` complains about permissions locally on Linux/macOS, run
-`chmod +x gradlew` once. (CI is unaffected — it invokes Gradle via `bash`.)
+The `gradlew` scripts are **self-bootstrapping**: the wrapper JAR is
+fetched from the official Gradle repository on first use, so this repository
+stays text-only. Beyond a JDK, nothing needs to be installed.
 
 ## How the learning works (in one paragraph)
 

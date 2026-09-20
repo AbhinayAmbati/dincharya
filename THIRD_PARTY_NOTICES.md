@@ -37,4 +37,6 @@ The full license text is available at https://openfontlicense.org/.
 ## Gradle wrapper
 
 The Gradle wrapper JAR (`frontend/gradle/wrapper/gradle-wrapper.jar`) is
-distributed by Gradle Inc. under the Apache License 2.0.
+not committed to this repository; the `gradlew` scripts download it from the
+official Gradle repository on first use. It is distributed by Gradle Inc.
+under the Apache License 2.0.

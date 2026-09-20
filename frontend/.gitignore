@@ -7,3 +7,5 @@
 # Noto Serif TTFs are fetched at first build by the fetchNotoSerif Gradle task
 # (see app/build.gradle.kts) — keep the repo text-only.
 app/src/main/res/font/*.ttf
+# The Gradle wrapper JAR is downloaded by gradlew on first use.
+gradle/wrapper/gradle-wrapper.jar
