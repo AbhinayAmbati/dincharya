@@ -1,0 +1,19 @@
+# --- Android / Gradle ---
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# --- Node (backend, future phases) ---
+node_modules/
+dist/
+.env
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+*.log
