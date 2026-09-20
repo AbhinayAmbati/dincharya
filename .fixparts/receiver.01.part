@@ -1,0 +1,42 @@
+        val pendingResult = goAsync()
+        scope.launch {
+            try {
+                val repository = Graph.repository
+                val task = repository.taskById(taskId)
+                if (task != null) {
+                    when (action) {
+                        ACTION_COMPLETE -> {
+                            // completeTask() is idempotent: if the task was
+                            // already completed (by another notification or
+                            // in the app), this is a quiet no-op.
+                            repository.completeTask(task)
+                            // Defensive: drop any follow-up reminder work.
+                            ReminderScheduler.cancel(context, taskId)
+                        }
+                        ACTION_SNOOZE -> {
+                            val newTime = repository.snoozeTask(task, SNOOZE_MINUTES)
+                            // Book the follow-up reminder for the snoozed time.
+                            ReminderScheduler.schedule(context, taskId, newTime)
+                        }
+                    }
+                }
+            } finally {
+                pendingResult.finish()
+            }
+        }
+    }
+
+    companion object {
+        const val ACTION_COMPLETE = "com.dincharya.app.action.COMPLETE"
+        const val ACTION_SNOOZE = "com.dincharya.app.action.SNOOZE"
+        const val KEY_TASK_ID = "taskId"
+        const val SNOOZE_MINUTES = 10
+
+        /** Helper so callers build intents with matching extras. */
+        fun intentFor(context: Context, taskId: Long, action: String): Intent =
+            Intent(context, ReminderActionReceiver::class.java).apply {
+                this.action = action
+                putExtra(KEY_TASK_ID, taskId)
+            }
+    }
+}

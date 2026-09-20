@@ -1,0 +1,46 @@
+package com.dincharya.app.data
+
+import com.dincharya.app.learning.EventLogger
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * The app's single source of truth for task data and the place where every
+ * state change gets logged as a behavioural event.
+ *
+ * UI layer (ViewModels) talks only to this class — never to DAOs directly —
+ * so the "mutate + log" pair can never be accidentally separated.
+ */
+class TaskRepository(
+    private val taskDao: TaskDao,
+    private val eventDao: TaskEventDao,
+) {
+    private val eventLogger = EventLogger(eventDao)
+
+    /** All pending tasks, live-updating. */
+    val pendingTasks: Flow<List<TaskEntity>> = taskDao.observePending()
+
+    /** Tasks completed within [from, to), live-updating (day boundaries). */
+    fun completedBetween(from: Long, to: Long): Flow<List<TaskEntity>> =
+        taskDao.observeCompletedBetween(from, to)
+
+    suspend fun taskById(id: Long): TaskEntity? = taskDao.byId(id)
+
+    /**
+     * Create a task and log the CREATED event.
+     *
+     * @return the new task's row id.
+     */
+    suspend fun createTask(task: TaskEntity): Long {
+        val id = taskDao.insert(task)
+        eventLogger.log(task.copy(id = id), EventOutcome.CREATED)
+        return id
+    }
+
+    /**
+     * Mark a task complete and log the COMPLETED event — the reward signal
+     * the learning layer trains on.
+     *
+     * Idempotent by design: a notification Done button, the Today check
+     * circle and the Focus screen can all fire for the same task, and a
+     * repeated completion must never be logged twice — duplicates would
+     * pollute the learning signal and repeat rows in the evening review.
