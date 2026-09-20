@@ -1,0 +1,48 @@
+import com.dincharya.app.ui.components.SectionHeader
+import com.dincharya.app.ui.navigation.Screen
+
+/** App version shown in About — keep in sync with app/build.gradle.kts. */
+private const val APP_VERSION = "0.1.0"
+
+/**
+ * Settings screen: appearance, reminders, and the privacy promise.
+ *
+ * Layout language matches the rest of the app: grouped sections opened by
+ * a hairline kicker, full-width rows with a leading thin-stroke icon,
+ * generous spacing. Every row is a single, self-explanatory control.
+ */
+@Composable
+fun SettingsScreen(navController: NavController) {
+    // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
+    // subclasses automatically, so no explicit factory is needed.
+    val viewModel: SettingsViewModel = viewModel()
+
+    // Local mirrors so the switches feel instant while persisting.
+    var themeMode by remember { mutableStateOf(viewModel.themeMode) }
+    var notifications by remember { mutableStateOf(viewModel.notificationsEnabled) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp),
+    ) {
+        Spacer(Modifier.height(24.dp))
+        Text(stringResource(R.string.settings_header), style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(20.dp))
+
+        // ---- Appearance ----
+        SectionHeader(stringResource(R.string.settings_appearance))
+        Spacer(Modifier.height(8.dp))
+        ThemeOption(
+            icon = Icons.Outlined.Devices,
+            label = stringResource(R.string.settings_theme_system),
+            selected = themeMode == SettingsStore.THEME_SYSTEM,
+        ) { themeMode = SettingsStore.THEME_SYSTEM; viewModel.setTheme(SettingsStore.THEME_SYSTEM) }
+        ThemeOption(
+            icon = Icons.Outlined.LightMode,
+            label = stringResource(R.string.settings_theme_light),
+            selected = themeMode == SettingsStore.THEME_LIGHT,
+        ) { themeMode = SettingsStore.THEME_LIGHT; viewModel.setTheme(SettingsStore.THEME_LIGHT) }
+        ThemeOption(
+            icon = Icons.Outlined.DarkMode
