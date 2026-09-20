@@ -1,0 +1,47 @@
+# One-shot assembler: concatenates the verified .fixparts/ chunks into the
+# real source files, commits the result, and removes the parts and itself.
+# Manual dispatch only, so it never fires while parts are still uploading.
+name: Assemble source files
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    name: Assemble and commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Assemble parts into source files
+        run: |
+          set -e
+          python3 - <<'PYEOF'
+          import os
+          targets = {
+              'settings': 'frontend/app/src/main/java/com/dincharya/app/ui/screens/settings/SettingsScreen.kt',
+              'gradle': 'frontend/app/build.gradle.kts',
+              'repo': 'frontend/app/src/main/java/com/dincharya/app/data/TaskRepository.kt',
+              'receiver': 'frontend/app/src/main/java/com/dincharya/app/notifications/ReminderActionReceiver.kt',
+          }
+          for prefix, target in targets.items():
+              parts = sorted(p for p in os.listdir('.fixparts') if p.startswith(prefix + '.'))
+              data = b''.join(open(os.path.join('.fixparts', p), 'rb').read() for p in parts)
+              with open(target, 'wb') as f:
+                  f.write(data)
+              print(prefix + ': ' + str(len(parts)) + ' parts, ' + str(len(data)) + ' bytes -> ' + target)
+          PYEOF
+
+      - name: Clean up and commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -r -q .fixparts
+          git rm -q .github/workflows/assemble.yml
+          git add -A
+          git commit -m "Assemble fixed sources: instant notification dismiss, idempotent completion, deduped review, release signing, Devices icon"
+          git push
