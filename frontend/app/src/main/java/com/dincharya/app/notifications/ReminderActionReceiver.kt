@@ -50,17 +50,17 @@ class ReminderActionReceiver : BroadcastReceiver() {
                     when (action) {
                         ACTION_COMPLETE -> {
                             // completeTask() is idempotent: if the task was
-                          // already completed (by another notification or
-                          // in the app), this is a quiet no-op.
-                           repository.completeTask(task)
-                           // Defensive: drop any follow-up reminder work.
-                           ReminderScheduler.cancel(context, taskId)
+                            // already completed (by another notification or
+                            // in the app), this is a quiet no-op.
+                            repository.completeTask(task)
+                            // Defensive: drop any follow-up reminder work.
+                            ReminderScheduler.cancel(context, taskId)
                         }
-                         ACTION_SNOOZE -> {
+                        ACTION_SNOOZE -> {
                             val newTime = repository.snoozeTask(task, SNOOZE_MINUTES)
-                           // Book the follow-up reminder for the snoozed time.
+                            // Book the follow-up reminder for the snoozed time.
                             ReminderScheduler.schedule(context, taskId, newTime)
-                         }
+                        }
                     }
                 }
             } finally {

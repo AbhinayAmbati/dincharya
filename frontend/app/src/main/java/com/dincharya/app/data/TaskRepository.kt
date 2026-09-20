@@ -56,10 +56,10 @@ class TaskRepository(
      * Snooze a task by [minutes] and log the SNOOZED event.
      *
      * @return the new reminder time (epoch millis) so the caller can hand it
- *               to the reminder scheduler.
+     *         to the reminder scheduler.
      */
     suspend fun snoozeTask(task: TaskEntity, minutes: Int): Long {
-        val newTime = System.currentTimeMillis() + minutes * 60_0000L
+        val newTime = System.currentTimeMillis() + minutes * 60_000L
         taskDao.update(task.copy(scheduledAt = newTime, snoozeCount = task.snoozeCount + 1))
         eventLogger.log(task, EventOutcome.SNOOZED)
         return newTime

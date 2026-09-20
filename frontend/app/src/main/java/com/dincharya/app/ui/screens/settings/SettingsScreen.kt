@@ -88,4 +88,189 @@ fun SettingsScreen(navController: NavController) {
         ) { themeMode = SettingsStore.THEME_SYSTEM; viewModel.setTheme(SettingsStore.THEME_SYSTEM) }
         ThemeOption(
             icon = Icons.Outlined.LightMode,
-            label = stringResource(R.string.settings_theme_light¤°(€€€€€€€€€€€Í•±•Ñ•€ôÑ¡•µ•5½‘”€ôôM•ÑÑ¥¹ÍMÑ½É”¹Q!5}1%!P°(€€€€€€€€¤ìÑ¡•µ•5½‘”€ôM•ÑÑ¥¹ÍMÑ½É”¹Q!5}1%!PìÙ¥•Ý5½‘•°¹Í•ÑQ¡•µ”¡M•ÑÑ¥¹ÍMÑ½É”¹Q!5}1%!P¤ô(€€€€€€€Q¡•µ•=ÁÑ¥½¸ (€€€€€€€€€€€¥½¸€ô%½¹Ì¹=ÕÑ±¥¹•¹…É­5½‘”°(€€€€€€€€€€€±…‰•°€ôÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}Ñ¡•µ•}‘…É¬¤°(€€€€€€€€€€€Í•±•Ñ•€ôÑ¡•µ•5½‘”€ôôM•ÑÑ¥¹ÍMÑ½É”¹Q!5}I,°(€€€€€€€€¤ìÑ¡•µ•5½‘”€ôM•ÑÑ¥¹ÍMÑ½É”¹Q!5}HììÙ¥•Ý5½‘•°¹Í•ÑQ¡•µ”¡M•ÑÑ¥¹ÍMÑ½É”¹Q!5}I,¤ô(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð ÈÐ¹‘À¤¤((€€€€€€€€¼¼€´´´´I•µ¥¹‘•ÉÌ€´´´´(€€€€€€€M•Ñ¥½¹!•…‘•È¡ÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}¹½Ñ¥™¥…Ñ¥½¹Ì¤¤(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð à¹‘À¤¤(€€€€€€€I½Ü (€€€€€€€€€€€Ù•ÉÑ¥…±±¥¹µ•¹Ð€ô±¥¹µ•¹Ð¹•¹Ñ•ÉY•ÉÑ¥…±±ä°(€€€€€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È(€€€€€€€€€€€€€€€€¹™¥±±5…á]¥‘Ñ  ¤(€€€€€€€€€€€€€€€€¹Á…‘‘¥¹œ¡Ù•ÉÑ¥…°€ô€Ø¹‘À¤°(€€€€€€€€¤ì(€€€€€€€€€€€%½¸ (€€€€€€€€€€€€€€€%½¹Ì¹=ÕÑ±¥¹•¹9½Ñ¥™¥…Ñ¥½¹Ì°(€€€€€€€€€€€€€€€½¹Ñ•¹Ñ•ÍÉ¥ÁÑ¥½¸€ô¹Õ±°°(€€€€€€€€€€€€€€€Ñ¥¹Ð€ô5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…•Y…É¥…¹Ð°(€€€€€€€€€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È¹Í¥é” ÈÈ¹‘À¤°(€€€€€€€€€€€€¤(€€€€€€€€€€€MÁ…•È¡5½‘¥™¥•È¹Í¥é” ÄÐ¹‘À¤¤(€€€€€€€€€€€½±Õµ¸¡5½‘¥™¥•È¹Ý•¥¡Ð Å˜¤¤ì(€€€€€€€€€€€€€€€Q•áÐ¡ÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}¹½Ñ¥™¥…Ñ¥½¹Í}•¹…‰±•¤°(€€€€€€€€€€€€€€€€€€€ÍÑå±”€ô5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹‰½‘å1…É”¤(€€€€€€€€€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð È¹‘À¤¤(€€€€€€€€€€€€€€€Q•áÐ (€€€€€€€€€€€€€€€€€€€ÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}¹½Ñ¥™¥…Ñ¥½¹Í}¡¥¹Ð¤°(€€€€€€€€€€€€€€€€€€€ÍÑå±”€ô5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹‰½‘åMµ…±°°(€€€€€€€€€€€€€€€€€€€½±½È€ô5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…•Y…É¥…¹Ð°(€€€€€€€€€€€€€€€€¤(€€€€€€€€€€€ô(€€€€€€€€€€€MÁ…•È¡5½‘¥™¥•È¹Í¥é” ÄØ¹‘À¤¤(€€€€€€€€€€€MÝ¥Ñ  (€€€€€€€€€€€€€€€¡•­•€ô¹½Ñ¥™¥…Ñ¥½¹Ì°(€€€€€€€€€€€€€€€½¹¡•­•‘¡…¹”€ôì(€€€€€€€€€€€€€€€€€€€¹½Ñ¥™¥…Ñ¥½¹Ì€ô¥Ð(€€€€€€€€€€€€€€€€€€€Ù¥•Ý5½‘•°¹Í•Ñ9½Ñ¥™¥…Ñ¥½¹Í¹…‰±•¡¥Ð¤(€€€€€€€€€€€€€€€ô°(€€€€€€€€€€€€¤(€€€€€€€ô(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð ÄØ¹‘À¤¤(€€€€€€€Q•áÐ (€€€€€€€€€€€ÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}¡É½¹½ÑåÁ”°Ù¥•Ý5½‘•°¹¡É½¹½ÑåÁ”¤°(€€€€€€€€€€€ÍÑå±”€ô5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹‰½‘å5•‘¥Õ´°(€€€€€€€€€€€½±½È€ô5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…•Y…É¥…¹Ð°(€€€€€€€€¤(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð ÈÐ¹‘À¤¤((€€€€€€€€¼¼€´´´´‰½ÕÐ€´´´´(€€€€€€€M•Ñ¥½¹!•…‘•È¡ÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}…‰½ÕÐ¤¤(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð ÄÈ¹‘À¤¤(€€€€€€€IÕ±•…Éì(€€€€€€€€€€€Q•áÐ (€€€€€€€€€€€€€€€€‰¥¹¡…Éå„ƒŠPÑ¡”Í¡•‘Õ±”Ñ¡…Ð±•…É¹Ìå½Ô¸ˆ°(€€€€€€€€€€€€€€€ÍÑå±”€ô5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹Ñ¥Ñ±•5•‘¥Õ´°(€€€€€€€€€€€€¤(€€€€€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð à¹‘À¤¤(€€€€€€€€€€€Q•áÐ (€€€€€€€€€€€€€€€ÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}ÁÉ¥Ù…å}±¥¹”¤°(€€€€€€€€€€€€€€€ÍÑå±”€ô5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹‰½‘å5•‘¥Õ´°(€€€€€€€€€€€€€€€½±½È€ô5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…•Y…É¥…¹Ð°(€€€€€€€€€€€€¤(€€€€€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð à¹‘À¤¤(€€€€€€€€€€€Q•áÐ (€€€€€€€€€€€€€€€ÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}Ù•ÉÍ¥½¸°AA}YIM%=8¤°(€€€€€€€€€€€€€€€ÍÑå±”€ô5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹‰½‘åMµ…±°°(€€€€€€€€€€€€€€€½±½È€ô5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…•Y…É¥…¹Ð°(€€€€€€€€€€€€¤(€€€€€€€ô(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð ÄÈ¹‘À¤¤(€€€€€€€M•ÑÑ¥¹Í1¥¹¬ (€€€€€€€€€€€¥½¸€ô%½¹Ì¹=ÕÑ±¥¹•¹AÉ¥Ù…åQ¥À°(€€€€€€€€€€€±…‰•°€ôÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹ÁÉ¥Ù…å}Ñ¥Ñ±”¤°(€€€€€€€€¤ì¹…Ù½¹ÑÉ½±±•È¹¹…Ù¥…Ñ”¡MÉ••¸¹AÉ¥Ù…ä¹É½ÕÑ”¤ô(€€€€€€€M•ÑÑ¥¹Í1¥¹¬ (€€€€€€€€€€€¥½¸€ô%½¹Ì¹=ÕÑ±¥¹•¹•ÍÉ¥ÁÑ¥½¸°(€€€€€€€€€€€±…‰•°€ôÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Ñ•ÉµÍ}Ñ¥Ñ±”¤°(€€€€€€€€¤ì¹…Ù½¹ÑÉ½±±•È¹¹…Ù¥…Ñ”¡MÉ••¸¹Q•ÉµÌ¹É½ÕÑ”¤ô(€€€€€€€M•ÑÑ¥¹Í1¥¹¬ (€€€€€€€€€€€¥½¸€ô%½¹Ì¹=ÕÑ±¥¹•¹I•Á±…ä°(€€€€€€€€€€€±…‰•°€ôÍÑÉ¥¹I•Í½ÕÉ”¡H¹ÍÑÉ¥¹œ¹Í•ÑÑ¥¹Í}É•Á±…å}½¹‰½…É‘¥¹œ¤°(€€€€€€€€¤ì(€€€€€€€€€€€Ù¥•Ý5½‘•°¹É•Á±…å=¹‰½…É‘¥¹œ ¤(€€€€€€€€€€€¹…Ù½¹ÑÉ½±±•È¹¹…Ù¥…Ñ”¡MÉ••¸¹=¹‰½…É‘¥¹œ¹É½ÕÑ”¤ì(€€€€€€€€€€€€€€€Á½ÁUÁQ¼¡MÉ••¸¹Q½‘…ä¹É½ÕÑ”¤ì¥¹±ÕÍ¥Ù”€ôÑÉÕ”ô(€€€€€€€€€€€ô(€€€€€€€ô(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹¡•¥¡Ð ÌÈ¹‘À¤¤(€€€ô)ô((¼¨¨(€¨=¹”Í•±•Ñ…‰±”Ñ¡•µ”É½Üè±•…‘¥¹œ¥½¸°±…‰•°°µ½¹½¡É½µ”Í•±•Ñ¥½¸‘½Ð¸(€¨™¥±±•‘½Ðµ…É­ÌÑ¡”…Ñ¥Ù”Ñ¡•µ”°…¸½ÕÑ±¥¹•É¥¹œÑ¡”½Ñ¡•ÉÌƒŠP(€¨Í¡…Á”°¹•Ù•È½±½ÕÈ°…ÉÉ¥•ÌÑ¡”ÍÑ…Ñ”¸Õ±°É½Ü¥ÌÑ…ÁÁ…‰±”¸(€¨¼)½µÁ½Í…‰±”)ÁÉ¥Ù…Ñ”™Õ¸Q¡•µ•=ÁÑ¥½¸ (€€€¥½¸è%µ…•Y•Ñ½È°(€€€±…‰•°èMÑÉ¥¹œ°(€€€Í•±•Ñ•è	½½±•…¸°(€€€½¹±¥¬è€ ¤€´øU¹¥Ð°(¤ì(€€€I½Ü (€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È(€€€€€€€€€€€€¹™¥±±5…á]¥‘Ñ  ¤(€€€€€€€€€€€€¹±¥À¡I½Õ¹‘•‘½É¹•ÉM¡…Á” à¹‘À¤¤(€€€€€€€€€€€€¹±¥­…‰±”¡½¹±¥¬€ô½¹±¥¬¤(€€€€€€€€€€€€¹Á…‘‘¥¹œ¡¡½É¥é½¹Ñ…°€ô€Ð¹‘À°Ù•ÉÑ¥…°€ô€ÄÐ¹‘À¤°(€€€€€€€Ù•ÉÑ¥…±±¥¹µ•¹Ð€ô±¥¹µ•¹Ð¹•¹Ñ•ÉY•ÉÑ¥…±±ä°(€€€€¤ì(€€€€€€€%½¸ (€€€€€€€€€€€¥½¸°(€€€€€€€€€€€½¹Ñ•¹Ñ•ÍÉ¥ÁÑ¥½¸€ô¹Õ±°°(€€€€€€€€€€€Ñ¥¹Ð€ô¥˜€¡Í•±•Ñ•¤5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…”(€€€€€€€€€€€•±Í”5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…•Y…É¥…¹Ð°(€€€€€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È¹Í¥é” ÈÈ¹‘À¤°(€€€€€€€€¤(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹Í¥é” ÄÐ¹‘À¤¤(€€€€€€€Q•áÐ (€€€€€€€€€€€Ñ•áÐ€ô±…‰•°°(€€€€€€€€€€€ÍÑå±”€ô¥˜€¡Í•±•Ñ•¤5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹Ñ¥Ñ±•5•‘¥Õ´(€€€€€€€€€€€•±Í”5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹‰½‘å1…É”°(€€€€€€€€€€€½±½È€ô¥˜€¡Í•±•Ñ•¤5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…”(€€€€€€€€€€€•±Í”5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…•Y…É¥…¹Ð°(€€€€€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È¹Ý•¥¡Ð Å˜¤°(€€€€€€€€¤(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹Í¥é” à¹‘À¤¤(€€€€€€€	½à (€€€€€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È(€€€€€€€€€€€€€€€€¹Í¥é” Äà¹‘À¤(€€€€€€€€€€€€€€€€¹Ñ¡•¸ (€€€€€€€€€€€€€€€€€€€¥˜€¡Í•±•Ñ•¤ì(€€€€€€€€€€€€€€€€€€€€€€€5½‘¥™¥•È¹‰…­É½Õ¹¡5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…”°¥É±•M¡…Á”¤(€€€€€€€€€€€€€€€€€€€ô•±Í”ì(€€€€€€€€€€€€€€€€€€€€€€€5½‘¥™¥•È¹‰½É‘•È Ä¸Ô¹‘À°5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½ÕÑ±¥¹”°¥É±•M¡…Á”¤(€€€€€€€€€€€€€€€€€€€ô(€€€€€€€€€€€€€€€€¤°(€€€€€€€€¤(€€€ô)ô((¼¨¨(€¨¹…Ù¥…Ñ¥½¸É½Üè±•…‘¥¹œÑ¡¥¸µÍÑÉ½­”¥½¸°±…‰•°°ÑÉ…¥±¥¹œ¡•ÙÉ½¸¸(€¨UÍ•™½ÈÑ¡”AÉ¥Ù…äA½±¥ä°Q•ÉµÌ½˜UÍ”…¹É•Á±…äµ¥¹ÑÉ½‘ÕÑ¥½¸±¥¹­Ì¸(€¨¼)½µÁ½Í…‰±”)ÁÉ¥Ù…Ñ”™Õ¸M•ÑÑ¥¹Í1¥¹¬ (€€€¥½¸è%µ…•Y•Ñ½È°(€€€±…‰•°èMÑÉ¥¹œ°(€€€½¹±¥¬è€ ¤€´øU¹¥Ð°(¤ì(€€€I½Ü (€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È(€€€€€€€€€€€€¹™¥±±5…á]¥‘Ñ  ¤(€€€€€€€€€€€€¹±¥À¡I½Õ¹‘•‘½É¹•ÉM¡…Á” à¹‘À¤¤(€€€€€€€€€€€€¹±¥­…‰±”¡½¹±¥¬€ô½¹±¥¬¤(€€€€€€€€€€€€¹Á…‘‘¥¹œ¡¡½É¥é½¹Ñ…°€ô€Ð¹‘À°Ù•ÉÑ¥…°€ô€ÄÐ¹‘À¤°(€€€€€€€Ù•ÉÑ¥…±±¥¹µ•¹Ð€ô±¥¹µ•¹Ð¹•¹Ñ•ÉY•ÉÑ¥…±±ä°(€€€€¤ì(€€€€€€€%½¸ (€€€€€€€€€€€¥½¸°(€€€€€€€€€€€½¹Ñ•¹Ñ•ÍÉ¥ÁÑ¥½¸€ô¹Õ±°°(€€€€€€€€€€€Ñ¥¹Ð€ô5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…•Y…É¥…¹Ð°(€€€€€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È¹Í¥é” ÈÈ¹‘À¤°(€€€€€€€€¤(€€€€€€€MÁ…•È¡5½‘¥™¥•È¹Í¥é” ÄÐ¹‘À¤¤(€€€€€€€Q•áÐ (€€€€€€€€€€€Ñ•áÐ€ô±…‰•°°(€€€€€€€€€€€ÍÑå±”€ô5…Ñ•É¥…±Q¡•µ”¹ÑåÁ½É…Á¡ä¹‰½‘å1…É”°(€€€€€€€€€€€½±½È€ô5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½¹MÕÉ™…”°(€€€€€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È¹Ý•¥¡Ð Å˜¤°(€€€€€€€€¤(€€€€€€€%½¸ (€€€€€€€€€€€%½¹Ì¹=ÕÑ±¥¹•¹-•å‰½…É‘ÉÉ½ÝI¥¡Ð°(€€€€€€€€€€€½¹Ñ•¹Ñ•ÍÉ¥ÁÑ¥½¸€ô¹Õ±°°(€€€€€€€€€€€Ñ¥¹Ð€ô5…Ñ•É¥…±Q¡•µ”¹½±½ÉM¡•µ”¹½ÕÑ±¥¹”°(€€€€€€€€€€€µ½‘¥™¥•È€ô5½‘¥™¥•È¹Í¥é” ÈÀ¹‘À¤°(€€€€€€€€¤(€€€ô)ô
+            label = stringResource(R.string.settings_theme_light),
+            selected = themeMode == SettingsStore.THEME_LIGHT,
+        ) { themeMode = SettingsStore.THEME_LIGHT; viewModel.setTheme(SettingsStore.THEME_LIGHT) }
+        ThemeOption(
+            icon = Icons.Outlined.DarkMode,
+            label = stringResource(R.string.settings_theme_dark),
+            selected = themeMode == SettingsStore.THEME_DARK,
+        ) { themeMode = SettingsStore.THEME_DARK; viewModel.setTheme(SettingsStore.THEME_DARK) }
+        Spacer(Modifier.height(24.dp))
+
+        // ---- Reminders ----
+        SectionHeader(stringResource(R.string.settings_notifications))
+        Spacer(Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+        ) {
+            Icon(
+                Icons.Outlined.Notifications,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp),
+            )
+            Spacer(Modifier.size(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.settings_notifications_enabled),
+                    style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    stringResource(R.string.settings_notifications_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.size(16.dp))
+            Switch(
+                checked = notifications,
+                onCheckedChange = {
+                    notifications = it
+                    viewModel.setNotificationsEnabled(it)
+                },
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            stringResource(R.string.settings_chronotype, viewModel.chronotype),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(24.dp))
+
+        // ---- About ----
+        SectionHeader(stringResource(R.string.settings_about))
+        Spacer(Modifier.height(12.dp))
+        RuleCard {
+            Text(
+                "Dincharya â€” the schedule that learns you.",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.settings_privacy_line),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.settings_version, APP_VERSION),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        SettingsLink(
+            icon = Icons.Outlined.PrivacyTip,
+            label = stringResource(R.string.privacy_title),
+        ) { navController.navigate(Screen.Privacy.route) }
+        SettingsLink(
+            icon = Icons.Outlined.Description,
+            label = stringResource(R.string.terms_title),
+        ) { navController.navigate(Screen.Terms.route) }
+        SettingsLink(
+            icon = Icons.Outlined.Replay,
+            label = stringResource(R.string.settings_replay_onboarding),
+        ) {
+            viewModel.replayOnboarding()
+            navController.navigate(Screen.Onboarding.route) {
+                popUpTo(Screen.Today.route) { inclusive = true }
+            }
+        }
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+/**
+ * One selectable theme row: leading icon, label, monochrome selection dot.
+ * A filled dot marks the active theme, an outlined ring the others â€”
+ * shape, never colour, carries the state. Full row is tappable.
+ */
+@Composable
+private fun ThemeOption(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = if (selected) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.size(14.dp))
+        Text(
+            text = label,
+            style = if (selected) MaterialTheme.typography.titleMedium
+            else MaterialTheme.typography.bodyLarge,
+            color = if (selected) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.size(8.dp))
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .then(
+                    if (selected) {
+                        Modifier.background(MaterialTheme.colorScheme.onSurface, CircleShape)
+                    } else {
+                        Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    }
+                ),
+        )
+    }
+}
+
+/**
+ * A navigation row: leading thin-stroke icon, label, trailing chevron.
+ * Used for the Privacy Policy, Terms of Use and replay-introduction links.
+ */
+@Composable
+private fun SettingsLink(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.size(14.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            Icons.Outlined.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
