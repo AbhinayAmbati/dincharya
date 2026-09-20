@@ -189,7 +189,9 @@ fun RuleCard(
         color = MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
-        Box(Modifier.padding(16.dp)) { content() }
+        // Column, not Box: a Box would stack multiple children on top of
+        // each other, which is exactly the overlap bug the About card had.
+        Column(Modifier.padding(16.dp)) { content() }
     }
 }
 

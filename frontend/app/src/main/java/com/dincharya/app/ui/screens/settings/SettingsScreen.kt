@@ -3,10 +3,10 @@ package com.dincharya.app.ui.screens.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,10 +16,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BrightnessAuto
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.PrivacyTip
+import androidx.compose.material.icons.outlined.Replay
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,8 +55,8 @@ private const val APP_VERSION = "0.1.0"
  * Settings screen: appearance, reminders, and the privacy promise.
  *
  * Layout language matches the rest of the app: grouped sections opened by
- * a hairline kicker, full-width selectable rows, generous spacing. Every
- * row is a single, self-explanatory control — no sub-screens.
+ * a hairline kicker, full-width rows with a leading thin-stroke icon,
+ * generous spacing. Every row is a single, self-explanatory control.
  */
 @Composable
 fun SettingsScreen(navController: NavController) {
@@ -72,14 +82,17 @@ fun SettingsScreen(navController: NavController) {
         SectionHeader(stringResource(R.string.settings_appearance))
         Spacer(Modifier.height(8.dp))
         ThemeOption(
+            icon = Icons.Outlined.BrightnessAuto,
             label = stringResource(R.string.settings_theme_system),
             selected = themeMode == SettingsStore.THEME_SYSTEM,
         ) { themeMode = SettingsStore.THEME_SYSTEM; viewModel.setTheme(SettingsStore.THEME_SYSTEM) }
         ThemeOption(
+            icon = Icons.Outlined.LightMode,
             label = stringResource(R.string.settings_theme_light),
             selected = themeMode == SettingsStore.THEME_LIGHT,
         ) { themeMode = SettingsStore.THEME_LIGHT; viewModel.setTheme(SettingsStore.THEME_LIGHT) }
         ThemeOption(
+            icon = Icons.Outlined.DarkMode,
             label = stringResource(R.string.settings_theme_dark),
             selected = themeMode == SettingsStore.THEME_DARK,
         ) { themeMode = SettingsStore.THEME_DARK; viewModel.setTheme(SettingsStore.THEME_DARK) }
@@ -94,6 +107,13 @@ fun SettingsScreen(navController: NavController) {
                 .fillMaxWidth()
                 .padding(vertical = 6.dp),
         ) {
+            Icon(
+                Icons.Outlined.Notifications,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp),
+            )
+            Spacer(Modifier.size(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.settings_notifications_enabled),
                     style = MaterialTheme.typography.bodyLarge)
@@ -142,26 +162,40 @@ fun SettingsScreen(navController: NavController) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Spacer(Modifier.height(8.dp))
-        TextButton(onClick = {
+        Spacer(Modifier.height(12.dp))
+        SettingsLink(
+            icon = Icons.Outlined.PrivacyTip,
+            label = stringResource(R.string.privacy_title),
+        ) { navController.navigate(Screen.Privacy.route) }
+        SettingsLink(
+            icon = Icons.Outlined.Description,
+            label = stringResource(R.string.terms_title),
+        ) { navController.navigate(Screen.Terms.route) }
+        SettingsLink(
+            icon = Icons.Outlined.Replay,
+            label = stringResource(R.string.settings_replay_onboarding),
+        ) {
             viewModel.replayOnboarding()
             navController.navigate(Screen.Onboarding.route) {
                 popUpTo(Screen.Today.route) { inclusive = true }
             }
-        }) {
-            Text(stringResource(R.string.settings_replay_onboarding))
         }
         Spacer(Modifier.height(32.dp))
     }
 }
 
 /**
- * One selectable theme row: label left, monochrome selection dot right.
+ * One selectable theme row: leading icon, label, monochrome selection dot.
  * A filled dot marks the active theme, an outlined ring the others —
  * shape, never colour, carries the state. Full row is tappable.
  */
 @Composable
-private fun ThemeOption(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun ThemeOption(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -170,12 +204,20 @@ private fun ThemeOption(label: String, selected: Boolean, onClick: () -> Unit) {
             .padding(horizontal = 4.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = if (selected) MaterialTheme.colorScheme.onSurface
+        else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.size(14.dp))
         Text(
             text = label,
             style = if (selected) MaterialTheme.typography.titleMedium
-            else MaterialTheme.typography.bodyLarge,
+        else MaterialTheme.typography.bodyLarge,
             color = if (selected) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onSurfaceVariant,
+        else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         Spacer(Modifier.size(8.dp))
@@ -189,6 +231,46 @@ private fun ThemeOption(label: String, selected: Boolean, onClick: () -> Unit) {
                         Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape)
                     }
                 ),
+        )
+    }
+}
+
+/**
+ * A navigation row: leading thin-stroke icon, label, trailing chevron.
+ * Used for the Privacy Policy, Terms of Use and replay-introduction links.
+ */
+@Composable
+private fun SettingsLink(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.size(14.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            Icons.Outlined.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(20.dp),
         )
     }
 }

@@ -26,4 +26,10 @@ sealed class Screen(val route: String) {
 
     /** Preferences. */
     object Settings : Screen("settings")
+
+    /** Privacy policy (opened from Settings). */
+    object Privacy : Screen("privacy")
+
+    /** Terms of use (opened from Settings). */
+    object Terms : Screen("terms")
 }

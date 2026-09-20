@@ -6,13 +6,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Insights
+import androidx.compose.material.icons.outlined.RateReview
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -22,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -34,6 +43,8 @@ import com.dincharya.app.app.Graph
 import com.dincharya.app.ui.screens.addtask.AddTaskScreen
 import com.dincharya.app.ui.screens.focus.FocusScreen
 import com.dincharya.app.ui.screens.insights.InsightsScreen
+import com.dincharya.app.ui.screens.legal.PrivacyScreen
+import com.dincharya.app.ui.screens.legal.TermsScreen
 import com.dincharya.app.ui.screens.onboarding.OnboardingScreen
 import com.dincharya.app.ui.screens.review.ReviewScreen
 import com.dincharya.app.ui.screens.settings.SettingsScreen
@@ -44,7 +55,7 @@ import com.dincharya.app.ui.theme.DincharyaTheme
  * Root composable: theme + scaffold + navigation graph.
  *
  * Bottom bar and FAB are hidden on the "immersive" screens (onboarding, add
- * task, focus) so they never compete for the user's attention.
+ * task, focus, legal pages) so they never compete for the user's attention.
  */
 @Composable
 fun DincharyaApp(themeMode: String) {
@@ -87,12 +98,14 @@ fun DincharyaApp(themeMode: String) {
 }
 
 /**
- * Editorial bottom bar: text-only tabs, no icons.
+ * Editorial bottom bar: thin-stroke icon over a serif label.
  *
  * The selected tab sits in a soft pill (the quiet highlight of an active row
  * in a well-set document); everything else stays muted grey. A single
- * hairline rule separates the bar from the content above. Weight and
- * background — never colour alone — carry the selected state.
+ * hairline rule separates the bar from the content above. Icon weight, text
+ * weight and background — never colour alone — carry the selected state.
+ * Taller than the old text-only bar so each tab gets a comfortable 48dp+
+ * touch target.
  */
 @Composable
 private fun DincharyaBottomBar(navController: NavHostController, currentRoute: String?) {
@@ -108,15 +121,16 @@ private fun DincharyaBottomBar(navController: NavHostController, currentRoute: S
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            bottomItems.forEach { (route, labelRes) ->
+            bottomItems.forEach { (route, labelRes, icon) ->
                 val selected = route == currentRoute
-                Box(
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .background(
                             if (selected) MaterialTheme.colorScheme.surfaceVariant
                             else Color.Transparent
@@ -129,13 +143,20 @@ private fun DincharyaBottomBar(navController: NavHostController, currentRoute: S
                                 restoreState = true
                             }
                         }
-                        .padding(horizontal = 18.dp, vertical = 10.dp),
-                    contentAlignment = Alignment.Center,
+                        .padding(horizontal = 22.dp, vertical = 8.dp),
                 ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null, // the visible label names the tab
+                        tint = if (selected) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(Modifier.height(2.dp))
                     Text(
                         text = stringResource(labelRes),
-                        style = if (selected) MaterialTheme.typography.titleMedium
-                        else MaterialTheme.typography.bodyMedium,
+                        style = if (selected) MaterialTheme.typography.titleSmall
+                        else MaterialTheme.typography.labelLarge,
                         color = if (selected) MaterialTheme.colorScheme.onSurface
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -145,12 +166,19 @@ private fun DincharyaBottomBar(navController: NavHostController, currentRoute: S
     }
 }
 
-/** Tabs in display order: (route, label resource). */
+/** One bottom tab: (route, label resource, thin-stroke icon). */
+private data class BottomItem(
+    val route: String,
+    val labelRes: Int,
+    val icon: ImageVector,
+)
+
+/** Tabs in display order. */
 private val bottomItems = listOf(
-    Screen.Today.route to R.string.tab_today,
-    Screen.Insights.route to R.string.tab_insights,
-    Screen.Review.route to R.string.tab_review,
-    Screen.Settings.route to R.string.tab_settings,
+    BottomItem(Screen.Today.route, R.string.tab_today, Icons.Outlined.Today),
+    BottomItem(Screen.Insights.route, R.string.tab_insights, Icons.Outlined.Insights),
+    BottomItem(Screen.Review.route, R.string.tab_review, Icons.Outlined.RateReview),
+    BottomItem(Screen.Settings.route, R.string.tab_settings, Icons.Outlined.Settings),
 )
 
 /**
@@ -174,5 +202,7 @@ fun DincharyaNavHost(navController: NavHostController, modifier: Modifier = Modi
         composable(Screen.Focus.route) { FocusScreen(navController) }
         composable(Screen.Review.route) { ReviewScreen(navController) }
         composable(Screen.Settings.route) { SettingsScreen(navController) }
+        composable(Screen.Privacy.route) { PrivacyScreen(navController) }
+        composable(Screen.Terms.route) { TermsScreen(navController) }
     }
 }
