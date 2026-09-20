@@ -115,7 +115,7 @@ dependencies {
     // --- Persistence: Room (local-first, source of truth on device) ---
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:compiler:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
 
     // --- Background work: reminders + nightly retrain ---
     implementation("androidx.work:work-runtime-ktx:2.9.1")

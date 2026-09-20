@@ -208,16 +208,16 @@ private fun ThemeOption(
             icon,
             contentDescription = null,
             tint = if (selected) MaterialTheme.colorScheme.onSurface
-        else MaterialTheme.colorScheme.onSurfaceVariant,
+            else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp),
         )
         Spacer(Modifier.size(14.dp))
         Text(
             text = label,
             style = if (selected) MaterialTheme.typography.titleMedium
-        else MaterialTheme.typography.bodyLarge,
+            else MaterialTheme.typography.bodyLarge,
             color = if (selected) MaterialTheme.colorScheme.onSurface
-        else MaterialTheme.colorScheme.onSurfaceVariant,
+            else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         Spacer(Modifier.size(8.dp))
