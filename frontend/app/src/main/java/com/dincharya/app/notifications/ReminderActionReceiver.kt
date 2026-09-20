@@ -1,0 +1,72 @@
+package com.dincharya.app.notifications
+
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import androidx.core.app.NotificationManagerCompat
+import com.dincharya.app.app.Graph
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
+/**
+ * Handles the "Done" and "Snooze 10 min" buttons on a reminder notification —
+ * so the user can act without opening the app.
+ *
+ * BroadcastReceiver.onReceive must not block, so the DB work is dispatched to
+ * a coroutine and [goAsync] keeps the process alive until it finishes.
+ */
+class ReminderActionReceiver : BroadcastReceiver() {
+
+    // Dedicated scope; the receiver is short-lived so we never cancel it
+    // explicitly — every launched job finishes in milliseconds.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val action = intent.action ?: return
+        val taskId = intent.getLongExtra(KEY_TASK_ID, -1L)
+        if (taskId == -1L) return
+
+        val pendingResult = goAsync()
+        scope.launch {
+            try {
+                val repository = Graph.repository
+                val task = repository.taskById(taskId)
+                if (task != null) {
+                    when (action) {
+                        ACTION_COMPLETE -> repository.completeTask(task)
+                        ACTION_SNOOZE -> {
+                            val newTime = repository.snoozeTask(task, SNOOZE_MINUTES)
+                            // Book the follow-up reminder for the snoozed time.
+                            ReminderScheduler.schedule(context, taskId, newTime)
+                        }
+                    }
+                }
+                // Whatever happened, the notification that hosted the buttons is done.
+                try {
+                    NotificationManagerCompat.from(context).cancel(taskId.toInt())
+                } catch (_: SecurityException) {
+                    // POST_NOTIFICATIONS denied — nothing to cancel visually.
+                }
+            } finally {
+                pendingResult.finish()
+            }
+        }
+    }
+
+    companion object {
+        const val ACTION_COMPLETE = "com.dincharya.app.action.COMPLETE"
+        const val ACTION_SNOOZE = "com.dincharya.app.action.SNOOZE"
+        const val KEY_TASK_ID = "taskId"
+        const val SNOOZE_MINUTES = 10
+
+        /** Helper so callers build intents with matching extras. */
+        fun intentFor(context: Context, taskId: Long, action: String): Intent =
+            Intent(context, ReminderActionReceiver::class.java).apply {
+                this.action = action
+                putExtra(KEY_TASK_ID, taskId)
+            }
+    }
+}
