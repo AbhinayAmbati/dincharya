@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Base (light) theme. The Compose code owns all real theming; this XML theme
+  only needs to be valid, full-screen (no action bar) and white so there is
+  no dark flash before the first Compose frame.
+-->
+<resources>
+    <style name="Theme.Dincharya" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+</resources>
