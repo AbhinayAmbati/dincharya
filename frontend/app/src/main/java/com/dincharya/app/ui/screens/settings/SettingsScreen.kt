@@ -1,14 +1,20 @@
 package com.dincharya.app.ui.screens.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -21,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,7 +43,10 @@ private const val APP_VERSION = "0.1.0"
 
 /**
  * Settings screen: appearance, reminders, and the privacy promise.
- * Every row is a single, self-explanatory control — no sub-screens.
+ *
+ * Layout language matches the rest of the app: grouped sections opened by
+ * a hairline kicker, full-width selectable rows, generous spacing. Every
+ * row is a single, self-explanatory control — no sub-screens.
  */
 @Composable
 fun SettingsScreen(navController: NavController) {
@@ -54,9 +64,9 @@ fun SettingsScreen(navController: NavController) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp),
     ) {
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.settings_header), style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
 
         // ---- Appearance ----
         SectionHeader(stringResource(R.string.settings_appearance))
@@ -73,24 +83,28 @@ fun SettingsScreen(navController: NavController) {
             label = stringResource(R.string.settings_theme_dark),
             selected = themeMode == SettingsStore.THEME_DARK,
         ) { themeMode = SettingsStore.THEME_DARK; viewModel.setTheme(SettingsStore.THEME_DARK) }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(24.dp))
 
         // ---- Reminders ----
         SectionHeader(stringResource(R.string.settings_notifications))
         Spacer(Modifier.height(8.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
         ) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.settings_notifications_enabled),
-                    style = MaterialTheme.typography.bodyMedium)
+                    style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(2.dp))
                 Text(
                     stringResource(R.string.settings_notifications_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Spacer(Modifier.size(16.dp))
             Switch(
                 checked = notifications,
                 onCheckedChange = {
@@ -99,28 +113,29 @@ fun SettingsScreen(navController: NavController) {
                 },
             )
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         Text(
             stringResource(R.string.settings_chronotype, viewModel.chronotype),
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(24.dp))
 
         // ---- About ----
         SectionHeader(stringResource(R.string.settings_about))
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         RuleCard {
             Text(
                 "Dincharya — the schedule that learns you.",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleMedium,
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.settings_privacy_line),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.settings_version, APP_VERSION),
                 style = MaterialTheme.typography.bodySmall,
@@ -140,18 +155,40 @@ fun SettingsScreen(navController: NavController) {
     }
 }
 
-/** One selectable theme row; the selected one is bold. */
+/**
+ * One selectable theme row: label left, monochrome selection dot right.
+ * A filled dot marks the active theme, an outlined ring the others —
+ * shape, never colour, carries the state. Full row is tappable.
+ */
 @Composable
 private fun ThemeOption(label: String, selected: Boolean, onClick: () -> Unit) {
-    Text(
-        text = (if (selected) "— " else "") + label,
-        style = if (selected) MaterialTheme.typography.titleMedium
-        else MaterialTheme.typography.bodyMedium,
-        color = if (selected) MaterialTheme.colorScheme.onSurface
-        else MaterialTheme.colorScheme.onSurfaceVariant,
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
-    )
+            .padding(horizontal = 4.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = if (selected) MaterialTheme.typography.titleMedium
+            else MaterialTheme.typography.bodyLarge,
+            color = if (selected) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.size(8.dp))
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .then(
+                    if (selected) {
+                        Modifier.background(MaterialTheme.colorScheme.onSurface, CircleShape)
+                    } else {
+                        Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    }
+                ),
+        )
+    }
 }

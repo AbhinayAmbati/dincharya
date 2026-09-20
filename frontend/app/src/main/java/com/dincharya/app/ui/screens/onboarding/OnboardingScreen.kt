@@ -1,15 +1,20 @@
 package com.dincharya.app.ui.screens.onboarding
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -33,9 +40,11 @@ import com.dincharya.app.ui.navigation.Screen
 /**
  * Onboarding: three intro pages, then a two-question chronotype quiz.
  *
- * The quiz result is stored as the timing prior ("early" / "neutral" /
- * "late") that the learning layer will refine with real behaviour. Short on
- * purpose — every extra question here loses users before they see the app.
+ * A fixed three-band structure so every page feels the same: a quiet top
+ * row (brand + skip), the page content vertically centered (scrolls if it
+ * ever outgrows the screen), and the controls pinned to the bottom. A row
+ * of small dashes shows progress through the four pages. All text is
+ * left-aligned.
  */
 @Composable
 fun OnboardingScreen(navController: NavController) {
@@ -50,88 +59,132 @@ fun OnboardingScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.Center,
+            .padding(horizontal = 28.dp),
     ) {
-        when (page) {
-            0 -> IntroPage(
-                title = stringResource(R.string.onboarding_p1_title),
-                body = stringResource(R.string.onboarding_p1_body),
+        Spacer(Modifier.height(24.dp))
+
+        // ---- Top band: quiet brand mark left, Skip right ----
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(R.string.app_name),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            1 -> IntroPage(
-                title = stringResource(R.string.onboarding_p2_title),
-                body = stringResource(R.string.onboarding_p2_body),
-            )
-            2 -> IntroPage(
-                title = stringResource(R.string.onboarding_p3_title),
-                body = stringResource(R.string.onboarding_p3_body),
-            )
-            else -> {
-                // ---- Chronotype quiz ----
-                Text(stringResource(R.string.onboarding_quiz_title),
-                    style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.onboarding_quiz_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(24.dp))
-                QuizQuestion(
-                    question = stringResource(R.string.onboarding_q1),
-                    options = listOf(
-                        stringResource(R.string.onboarding_q1_a),
-                        stringResource(R.string.onboarding_q1_b),
-                        stringResource(R.string.onboarding_q1_c),
-                    ),
-                    selected = answer1,
-                ) { answer1 = it }
-                Spacer(Modifier.height(24.dp))
-                QuizQuestion(
-                    question = stringResource(R.string.onboarding_q2),
-                    options = listOf(
-                        stringResource(R.string.onboarding_q2_a),
-                        stringResource(R.string.onboarding_q2_b),
-                        stringResource(R.string.onboarding_q2_c),
-                    ),
-                    selected = answer2,
-                ) { answer2 = it }
+            Spacer(Modifier.weight(1f))
+            if (page < 3) {
+                TextButton(onClick = { finishOnboarding(answer1, answer2, navController) }) {
+                    Text(stringResource(R.string.onboarding_skip))
+                }
             }
         }
 
-        Spacer(Modifier.height(32.dp))
+        // ---- Center band: progress + page content, centered, scrolls if tall ----
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 24.dp),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    repeat(4) { index -> ProgressDash(active = index == page) }
+                }
 
-        // ---- Navigation buttons ----
+                Spacer(Modifier.height(28.dp))
+
+                when (page) {
+                    0 -> IntroPage(
+                        title = stringResource(R.string.onboarding_p1_title),
+                        body = stringResource(R.string.onboarding_p1_body),
+                    )
+                    1 -> IntroPage(
+                        title = stringResource(R.string.onboarding_p2_title),
+                        body = stringResource(R.string.onboarding_p2_body),
+                    )
+                    2 -> IntroPage(
+                        title = stringResource(R.string.onboarding_p3_title),
+                        body = stringResource(R.string.onboarding_p3_body),
+                    )
+                    else -> {
+                        // ---- Chronotype quiz ----
+                        Column {
+                            Text(
+                                stringResource(R.string.onboarding_quiz_title),
+                                style = MaterialTheme.typography.headlineSmall,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                stringResource(R.string.onboarding_quiz_subtitle),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(28.dp))
+                            QuizQuestion(
+                                question = stringResource(R.string.onboarding_q1),
+                                options = listOf(
+                                    stringResource(R.string.onboarding_q1_a),
+                                    stringResource(R.string.onboarding_q1_b),
+                                    stringResource(R.string.onboarding_q1_c),
+                                ),
+                                selected = answer1,
+                            ) { answer1 = it }
+                            Spacer(Modifier.height(24.dp))
+                            QuizQuestion(
+                                question = stringResource(R.string.onboarding_q2),
+                                options = listOf(
+                                    stringResource(R.string.onboarding_q2_a),
+                                    stringResource(R.string.onboarding_q2_b),
+                                    stringResource(R.string.onboarding_q2_c),
+                                ),
+                                selected = answer2,
+                            ) { answer2 = it }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---- Bottom band: Back (ghost, left) + Next/Start (primary, right) ----
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (page > 0) {
                 TextButton(onClick = { page -= 1 }) {
                     Text(stringResource(R.string.onboarding_back))
                 }
-            } else {
-                Spacer(Modifier.height(1.dp))
             }
-
+            Spacer(Modifier.weight(1f))
             if (page < 3) {
-                Button(onClick = { page += 1 }) {
+                Button(
+                    onClick = { page += 1 },
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 132.dp)
+                        .height(48.dp),
+                ) {
                     Text(stringResource(R.string.onboarding_next))
-                }
-                TextButton(onClick = { finishOnboarding(answer1, answer2, navController) }) {
-                    Text(stringResource(R.string.onboarding_skip))
                 }
             } else {
                 Button(
                     onClick = { finishOnboarding(answer1, answer2, navController) },
                     enabled = answer1 >= 0 && answer2 >= 0,
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 132.dp)
+                        .height(48.dp),
                 ) {
                     Text(stringResource(R.string.onboarding_start))
                 }
             }
         }
+
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -162,18 +215,41 @@ private fun finishOnboarding(
     }
 }
 
-/** One of the three intro slides: big title, calm paragraph. */
+/**
+ * A thin progress dash: the filled one marks the current page. Length and
+ * fill (never colour) carry the state, per the accessibility rules.
+ */
+@Composable
+private fun ProgressDash(active: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(width = 24.dp, height = 3.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .background(
+                if (active) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.outline
+            ),
+    )
+}
+
+/** One of the three intro slides: big title, calm muted paragraph. */
 @Composable
 private fun IntroPage(title: String, body: String) {
     Column {
         Text(title, style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(12.dp))
-        Text(body, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(16.dp))
+        Text(
+            body,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
 /**
- * A quiz question: label + radio options. 48dp+ tap rows, no time pressure.
+ * A quiz question: label + full-width tappable option rows. The selected
+ * row is highlighted with the same soft pill the bottom bar uses, so the
+ * app's selection language stays consistent. 48dp+ tap targets.
  */
 @Composable
 private fun QuizQuestion(
@@ -183,17 +259,28 @@ private fun QuizQuestion(
     onSelect: (Int) -> Unit,
 ) {
     Column {
-        Text(question, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(4.dp))
+        Text(question, style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(8.dp))
         options.forEachIndexed { index, option ->
+            val isSelected = selected == index
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onSelect(index) },
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.surfaceVariant
+                        else Color.Transparent
+                    )
+                    .clickable { onSelect(index) }
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
             ) {
-                RadioButton(selected = selected == index, onClick = { onSelect(index) })
-                Text(option, style = MaterialTheme.typography.bodyMedium)
+                RadioButton(
+                    selected = isSelected,
+                    onClick = { onSelect(index) },
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(option, style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
