@@ -1,0 +1,54 @@
+# Dincharya — Release APK.
+# When a release is published on GitHub, build the APK and attach it to
+# that release so users get a direct download link on the Releases page.
+#
+# Notes:
+#  - Triggering on the release event (not a tag push) means the release
+#    entry exists before the build starts, so the upload never races.
+#  - v1 ships the debug APK: it is fully installable and signed with the
+#    debug key (so it upgrades cleanly over side-loaded debug installs).
+#    A signed release build comes with the v0.2 keystore work.
+#  - Invoked via `bash ./gradlew` like the CI build, for the same reason.
+name: Release APK
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  attach-apk:
+    name: Build and attach APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Caches the Gradle user home between runs; speeds up builds massively.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build debug APK
+        run: bash ./gradlew --no-daemon assembleDebug
+
+      # Rename so the asset reads "Dincharya-v0.1.0.apk" instead of
+      # "app-debug.apk" on the Releases page.
+      - name: Rename APK for the release
+        run: cp app/build/outputs/apk/debug/app-debug.apk "Dincharya-${{ github.event.release.tag_name }}.apk"
+
+      - name: Attach APK to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: frontend/Dincharya-*.apk
