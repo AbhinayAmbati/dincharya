@@ -45,4 +45,4 @@ fun SettingsScreen(navController: NavController) {
             selected = themeMode == SettingsStore.THEME_LIGHT,
         ) { themeMode = SettingsStore.THEME_LIGHT; viewModel.setTheme(SettingsStore.THEME_LIGHT) }
         ThemeOption(
-            icon = Icons.Outlined.DarkMode
+            icon = Icons.Outlined.DarkMode,
