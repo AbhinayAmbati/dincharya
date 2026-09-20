@@ -5,6 +5,11 @@
  *   Kotlin 1.9.24  <->  Compose compiler extension 1.5.14  <->  KSP 1.9.24-1.0.20
  *   AGP 8.5.2      <->  Gradle wrapper 8.7
  */
+// Imported explicitly because inside the Gradle Kotlin DSL the bare name
+// "java" resolves to the java plugin extension, which would break the
+// fully-qualified java.net.URI reference used by the font download below.
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -81,7 +86,7 @@ val fetchNotoSerif by tasks.registering {
                 val url = "https://raw.githubusercontent.com/notofonts/notofonts.github.io/" +
                     "$notoCommit/fonts/NotoSerif/hinted/ttf/$upstreamName"
                 logger.lifecycle("Downloading $fileName from the Noto fonts repo...")
-                url(java.net.URI(url).toURL()).openStream().use { input ->
+                URI(url).toURL().openStream().use { input ->
                     target.outputStream().use { output -> input.copyTo(output) }
                 }
             }
