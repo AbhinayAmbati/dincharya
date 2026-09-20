@@ -39,8 +39,14 @@ class TaskRepository(
     /**
      * Mark a task complete and log the COMPLETED event — the reward signal
      * the learning layer trains on.
+     *
+     * Idempotent by design: a notification Done button, the Today check
+     * circle and the Focus screen can all fire for the same task, and a
+     * repeated completion must never be logged twice — duplicates would
+     * pollute the learning signal and repeat rows in the evening review.
      */
     suspend fun completeTask(task: TaskEntity) {
+        if (task.isCompleted) return
         val now = System.currentTimeMillis()
         taskDao.update(task.copy(isCompleted = true, completedAt = now))
         eventLogger.log(task, EventOutcome.COMPLETED)
@@ -50,10 +56,10 @@ class TaskRepository(
      * Snooze a task by [minutes] and log the SNOOZED event.
      *
      * @return the new reminder time (epoch millis) so the caller can hand it
-     *         to the reminder scheduler.
+ *               to the reminder scheduler.
      */
     suspend fun snoozeTask(task: TaskEntity, minutes: Int): Long {
-        val newTime = System.currentTimeMillis() + minutes * 60_000L
+        val newTime = System.currentTimeMillis() + minutes * 60_0000L
         taskDao.update(task.copy(scheduledAt = newTime, snoozeCount = task.snoozeCount + 1))
         eventLogger.log(task, EventOutcome.SNOOZED)
         return newTime

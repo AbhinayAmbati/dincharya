@@ -1,6 +1,5 @@
 package com.dincharya.app.notifications
 
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -15,8 +14,11 @@ import kotlinx.coroutines.launch
  * Handles the "Done" and "Snooze 10 min" buttons on a reminder notification —
  * so the user can act without opening the app.
  *
- * BroadcastReceiver.onReceive must not block, so the DB work is dispatched to
- * a coroutine and [goAsync] keeps the process alive until it finishes.
+ * The notification is dismissed synchronously in [onReceive], BEFORE any
+ * database work starts: the visual response to the tap must never depend on
+ * how long the DB takes — or on it failing. (BroadcastReceiver.onReceive
+ * must not block, so the DB work is dispatched to a coroutine and [goAsync]
+ * keeps the process alive until it finishes.)
  */
 class ReminderActionReceiver : BroadcastReceiver() {
 
@@ -29,6 +31,16 @@ class ReminderActionReceiver : BroadcastReceiver() {
         val taskId = intent.getLongExtra(KEY_TASK_ID, -1L)
         if (taskId == -1L) return
 
+        // 1. Dismiss the notification immediately — a stuck-looking
+        //    notification makes users tap again, and every extra tap is a
+        //    duplicate interaction the learning layer would have to digest.
+        try {
+            NotificationManagerCompat.from(context).cancel(taskId.toInt())
+        } catch (_: SecurityException) {
+            // POST_NOTIFICATIONS denied — nothing to cancel visually.
+        }
+
+        // 2. Do the actual work asynchronously.
         val pendingResult = goAsync()
         scope.launch {
             try {
@@ -36,19 +48,20 @@ class ReminderActionReceiver : BroadcastReceiver() {
                 val task = repository.taskById(taskId)
                 if (task != null) {
                     when (action) {
-                        ACTION_COMPLETE -> repository.completeTask(task)
-                        ACTION_SNOOZE -> {
-                            val newTime = repository.snoozeTask(task, SNOOZE_MINUTES)
-                            // Book the follow-up reminder for the snoozed time.
-                            ReminderScheduler.schedule(context, taskId, newTime)
+                        ACTION_COMPLETE -> {
+                            // completeTask() is idempotent: if the task was
+                          // already completed (by another notification or
+                          // in the app), this is a quiet no-op.
+                           repository.completeTask(task)
+                           // Defensive: drop any follow-up reminder work.
+                           ReminderScheduler.cancel(context, taskId)
                         }
+                         ACTION_SNOOZE -> {
+                            val newTime = repository.snoozeTask(task, SNOOZE_MINUTES)
+                           // Book the follow-up reminder for the snoozed time.
+                            ReminderScheduler.schedule(context, taskId, newTime)
+                         }
                     }
-                }
-                // Whatever happened, the notification that hosted the buttons is done.
-                try {
-                    NotificationManagerCompat.from(context).cancel(taskId.toInt())
-                } catch (_: SecurityException) {
-                    // POST_NOTIFICATIONS denied — nothing to cancel visually.
                 }
             } finally {
                 pendingResult.finish()

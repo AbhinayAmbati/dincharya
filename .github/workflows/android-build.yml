@@ -1,5 +1,5 @@
 # Dincharya — Android CI.
-# On every push: build the debug APK and run unit tests, then publish the APK
+# On every push: build the release APK and run unit tests, then publish the APK
 # as a downloadable artifact on the workflow run page.
 #
 # We invoke Gradle via `bash ./gradlew` so the build does not depend on the
@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    name: Build debug APK
+    name: Build release APK
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -33,15 +33,15 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build debug APK
-        run: bash ./gradlew --no-daemon assembleDebug
+      - name: Build release APK
+        run: bash ./gradlew --no-daemon assembleRelease
 
       - name: Run unit tests
         run: bash ./gradlew --no-daemon testDebugUnitTest
 
-      - name: Upload debug APK
+      - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: dincharya-debug-apk
-          path: frontend/app/build/outputs/apk/debug/app-debug.apk
+          name: dincharya-release-apk
+          path: frontend/app/build/outputs/apk/release/app-release.apk
           retention-days: 14

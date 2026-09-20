@@ -36,6 +36,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Signed with the debug key so the release APK is directly
+            // installable from CI artifacts and GitHub Releases.
+            // A proper keystore replaces this in v0.2; until then an update
+            // from a different CI machine may need an uninstall first.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -53,75 +58,7 @@ android {
     }
 }
 
-// Export Room schemas to /app/schemas so DB migrations can be reviewed in PRs.
-ksp {
+// Export Room schemas to /app/schemas so DB migrations can be reviewwed in PRs.
+nsp {
     arg("room.schemaLocation", "$projectDir/schemas")
-}
-
-// ---------------------------------------------------------------------------
-// Noto Serif fonts (SIL OFL — see THIRD_PARTY_NOTICES.md).
-//
-// The four TTFs are fetched from the official Noto fonts repository on the
-// FIRST build and cached in src/main/res/font/ afterwards. This keeps the
-// git repo text-only while the app still bundles the real fonts.
-//
-// The URLs are pinned to an immutable commit SHA of notofonts.github.io so
-// an upstream reorganisation can never silently break the build.
-// ---------------------------------------------------------------------------
-val fetchNotoSerif by tasks.registering {
-    val fontDir = file("src/main/res/font")
-    val notoCommit = "d9b11dadb3d9d5cb562d753b0cb59b19ce805afb"
-    val fonts = mapOf(
-        "noto_serif_regular.ttf" to "NotoSerif-Regular.ttf",
-        "noto_serif_medium.ttf" to "NotoSerif-Medium.ttf",
-        "noto_serif_semibold.ttf" to "NotoSerif-SemiBold.ttf",
-        "noto_serif_bold.ttf" to "NotoSerif-Bold.ttf",
-    )
-    outputs.upToDateWhen { fonts.keys.all { File(fontDir, it).exists() } }
-    doLast {
-        fontDir.mkdirs()
-        fonts.forEach { (fileName, upstreamName) ->
-            val target = File(fontDir, fileName)
-            if (!target.exists()) {
-                val url = "https://raw.githubusercontent.com/notofonts/notofonts.github.io/" +
-                    "$notoCommit/fonts/NotoSerif/hinted/ttf/$upstreamName"
-                logger.lifecycle("Downloading $fileName from the Noto fonts repo...")
-                URI(url).toURL().openStream().use { input ->
-                    target.outputStream().use { output -> input.copyTo(output) }
-                }
-            }
-        }
-    }
-}
-
-tasks.named("preBuild") { dependsOn(fetchNotoSerif) }
-
-dependencies {
-    // --- Android core ---
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.activity:activity-compose:1.9.1")
-
-    // --- Compose (BOM pins every Compose artifact version) ---
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.4")
-
-    // --- Persistence: Room (local-first, source of truth on device) ---
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
-
-    // --- Background work: reminders + nightly retrain ---
-    implementation("androidx.work:work-runtime-ktx:2.9.1")
-
-    // --- Testing ---
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    debugImplementation("androidx.compose.ui:ui-tooling")
 }

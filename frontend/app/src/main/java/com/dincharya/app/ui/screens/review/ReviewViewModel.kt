@@ -70,7 +70,11 @@ class ReviewViewModel(app: Application) : AndroidViewModel(app) {
             val pending = repository.pendingTasks.first()
 
             _uiState.value = ReviewUiState(
-                completedToday = completed.mapNotNull { repository.taskById(it.taskId) },
+                // Events -> tasks, deduplicated: a task completed twice
+                // (e.g. a stubborn notification button) is still one task.
+                completedToday = completed
+                    .mapNotNull { repository.taskById(it.taskId) }
+                    .distinctBy { it.id },
                 movedToday = moved,
                 stillPending = pending.size,
                 alreadyReviewed = Graph.settings.lastReviewDayStart == dayStart,

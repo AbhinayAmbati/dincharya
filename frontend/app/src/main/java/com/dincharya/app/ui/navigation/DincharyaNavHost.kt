@@ -104,8 +104,8 @@ fun DincharyaApp(themeMode: String) {
  * in a well-set document); everything else stays muted grey. A single
  * hairline rule separates the bar from the content above. Icon weight, text
  * weight and background — never colour alone — carry the selected state.
- * Taller than the old text-only bar so each tab gets a comfortable 48dp+
- * touch target.
+ * Compact by design: 20dp icons, tight pills — the bar stays out of the
+ * content's way while keeping 48dp+ touch targets.
  */
 @Composable
 private fun DincharyaBottomBar(navController: NavHostController, currentRoute: String?) {
@@ -121,7 +121,7 @@ private fun DincharyaBottomBar(navController: NavHostController, currentRoute: S
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(vertical = 10.dp),
+                .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -143,14 +143,14 @@ private fun DincharyaBottomBar(navController: NavHostController, currentRoute: S
                                 restoreState = true
                             }
                         }
-                        .padding(horizontal = 22.dp, vertical = 8.dp),
+                        .padding(horizontal = 18.dp, vertical = 6.dp),
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null, // the visible label names the tab
                         tint = if (selected) MaterialTheme.colorScheme.onSurface
                         else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(

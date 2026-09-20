@@ -37,6 +37,13 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
     val durationOptions = listOf(15, 30, 45, 60, 90, 120)
 
     /**
+     * True while a save is in flight. Guards the save button against
+     * double-taps: without it, a few impatient taps on "Add task" would
+     * create several identical tasks (and several identical reminders).
+     */
+    private var saving = false
+
+    /**
      * Compute the scheduled time for today at [hour]:[minute]; if that slot
      * has already passed today, roll to tomorrow. (Reminder scheduling in
      * the past would fire immediately, which is never what the user meant.)
@@ -62,7 +69,8 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
      * @return true if the task was created.
      */
     fun save(onSaved: () -> Unit) {
-        if (!canSave) return
+        if (!canSave || saving) return
+        saving = true
         val scheduledAt = computeScheduledAt()
         viewModelScope.launch {
             val id = Graph.repository.createTask(

@@ -5,9 +5,8 @@
 # Notes:
 #  - Triggering on the release event (not a tag push) means the release
 #    entry exists before the build starts, so the upload never races.
-#  - v1 ships the debug APK: it is fully installable and signed with the
-#    debug key (so it upgrades cleanly over side-loaded debug installs).
-#    A signed release build comes with the v0.2 keystore work.
+#  - Ships the release build (minified, debug-signed so it installs
+#    without a store). A proper keystore comes with the v0.2 work.
 #  - Invoked via `bash ./gradlew` like the CI build, for the same reason.
 name: Release APK
 
@@ -40,13 +39,13 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build debug APK
-        run: bash ./gradlew --no-daemon assembleDebug
+      - name: Build release APK
+        run: bash ./gradlew --no-daemon assembleRelease
 
-      # Rename so the asset reads "Dincharya-v0.1.0.apk" instead of
-      # "app-debug.apk" on the Releases page.
+      # Rename so the asset reads "Dincharya-v0.1.1.apk" instead of
+      # "app-release.apk" on the Releases page.
       - name: Rename APK for the release
-        run: cp app/build/outputs/apk/debug/app-debug.apk "Dincharya-${{ github.event.release.tag_name }}.apk"
+        run: cp app/build/outputs/apk/release/app-release.apk "Dincharya-${{ github.event.release.tag_name }}.apk"
 
       - name: Attach APK to the release
         uses: softprops/action-gh-release@v2
