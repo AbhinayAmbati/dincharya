@@ -9,6 +9,7 @@
 // "java" resolves to the java plugin extension, which would break the
 // fully-qualified java.net.URI reference used by the font download below.
 import java.net.URI
+import java.util.Base64
 
 plugins {
     id("com.android.application")
@@ -49,7 +50,7 @@ android {
                 )
                 keystoreFile.parentFile.mkdirs()
                 keystoreFile.writeBytes(
-                    java.util.Base64.getDecoder().decode(keystoreBase64)
+                    Base64.getDecoder().decode(keystoreBase64)
                 )
                 signingConfigs.create("releaseUpload") {
                     storeFile = keystoreFile
