@@ -278,7 +278,7 @@ private fun ReleaseNotes(markdown: String) {
                 )
 
                 line.startsWith("- ") || line.startsWith("* ") -> Row {
-                    Text("—  ", style = MaterialTheme.typography.bodySmall)
+                    Text("·  ", style = MaterialTheme.typography.bodySmall)
                     Text(
                         renderInline(line.substring(2)),
                         style = MaterialTheme.typography.bodySmall,

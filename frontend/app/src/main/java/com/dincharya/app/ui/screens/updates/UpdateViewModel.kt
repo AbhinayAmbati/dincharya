@@ -111,7 +111,7 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
                     updateAvailable = isNewer(latest.version, APP_VERSION),
                 )
             } catch (e: IOException) {
-                _state.value = State.Error("Could not reach GitHub — check your connection.")
+                _state.value = State.Error("Could not reach GitHub. Check your connection.")
             } catch (e: Exception) {
                 _state.value = State.Error("Unexpected response from GitHub.")
             }
@@ -149,7 +149,7 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
                 withContext(Dispatchers.IO) { installWithSession(file) }
             } catch (e: Exception) {
                 _install.value = InstallState.Failed(
-                    "Download failed — check your connection and try again."
+                    "Download failed. Check your connection and try again."
                 )
             }
         }

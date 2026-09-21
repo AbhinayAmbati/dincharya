@@ -83,7 +83,7 @@ object AdaptationEngine {
         return Adaptation(
             taskId = task.id,
             newScheduledAt = target.timeInMillis,
-            reason = "Snoozed ${task.snoozeCount} times — Dincharya suggests reminding " +
+            reason = "Snoozed ${task.snoozeCount} times. Dincharya suggests reminding " +
                 "$SHIFT_EARLIER_HOURS hours earlier.",
         )
     }
@@ -150,7 +150,7 @@ object AdaptationEngine {
         return Adaptation(
             taskId = task.id,
             newScheduledAt = target.timeInMillis,
-            reason = "You finish tasks around %02d:00 far more often than around %02d:00 — try moving it there.".format(best, currentHour),
+            reason = "You finish tasks around %02d:00 far more often than around %02d:00. Try moving it there.".format(best, currentHour),
         )
     }
 
@@ -178,7 +178,7 @@ object AdaptationEngine {
         return Adaptation(
             taskId = task.id,
             newScheduledAt = target.timeInMillis,
-            reason = "You finish things around %02d:00 more often than any other hour — " +
+            reason = "You finish things around %02d:00 more often than in any other hour. " +
                 "want a reminder then?".format(best),
         )
     }

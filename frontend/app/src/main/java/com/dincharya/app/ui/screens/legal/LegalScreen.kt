@@ -92,6 +92,8 @@ fun PrivacyScreen(navController: NavController) {
         sections = listOf(
             stringResource(R.string.privacy_data_title) to
                 stringResource(R.string.privacy_data_body),
+            stringResource(R.string.privacy_learning_title) to
+                stringResource(R.string.privacy_learning_body),
             stringResource(R.string.privacy_permissions_title) to
                 stringResource(R.string.privacy_permissions_body),
             stringResource(R.string.privacy_accounts_title) to

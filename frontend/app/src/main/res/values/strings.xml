@@ -37,7 +37,7 @@
     <string name="add_duration_label">How long will it take?</string>
     <string name="add_duration_minutes">%1$d min</string>
     <string name="add_time_label">When should we remind you?</string>
-    <string name="add_time_none">No time — just keep it on the list</string>
+    <string name="add_time_none">No time. Just keep it on the list</string>
     <string name="add_time_set">Remind at</string>
     <string name="add_save">Add task</string>
     <string name="add_hour">Hour</string>
@@ -75,7 +75,7 @@
     <string name="review_moved">Moved or snoozed</string>
     <string name="review_pending">Still pending</string>
     <string name="review_note_label">One thing you learned about yourself today</string>
-    <string name="review_note_placeholder">Optional — a single sentence is enough</string>
+    <string name="review_note_placeholder">Optional. A single sentence is enough</string>
     <string name="review_mark_done">Mark day reviewed</string>
     <string name="review_already_done">Today is reviewed. See you tomorrow.</string>
 
@@ -100,9 +100,9 @@
     <string name="onboarding_back">Back</string>
     <string name="onboarding_start">Start using Dincharya</string>
     <string name="onboarding_p1_title">A schedule that learns you</string>
-    <string name="onboarding_p1_body">Dincharya schedules your day, reminds you — and quietly studies how you actually respond.</string>
+    <string name="onboarding_p1_body">Dincharya schedules your day, reminds you, and quietly studies how you actually respond.</string>
     <string name="onboarding_p2_title">An honest mirror</string>
-    <string name="onboarding_p2_body">Snoozed, ignored, completed — every interaction teaches the app when you really get things done, and it reshapes your day around that reality.</string>
+    <string name="onboarding_p2_body">Snoozed, ignored, completed: every interaction teaches the app when you really get things done, and it reshapes your day around that reality.</string>
     <string name="onboarding_p3_title">Your data stays yours</string>
     <string name="onboarding_p3_body">All learning happens on this phone. No account, no cloud, no tracking.</string>
     <string name="onboarding_quiz_title">Two quick questions</string>
@@ -124,11 +124,13 @@
 
     <!-- Legal -->
     <string name="privacy_title">Privacy Policy</string>
-    <string name="privacy_intro">Dincharya is built to respect your privacy. This policy explains what the app does — and does not do — with your information.</string>
+    <string name="privacy_intro">Dincharya is built to respect your privacy. This policy explains what the app does, and does not do, with your information.</string>
     <string name="privacy_data_title">Your data stays on your phone</string>
-    <string name="privacy_data_body">Every task, completion, snooze and setting is stored in a local database on your device. Nothing is uploaded, synced or sent anywhere — the app has no internet access at all.</string>
+    <string name="privacy_data_body">Every task, completion, snooze, focus session and setting is stored in a local database on your device. Nothing is uploaded, synced or sent anywhere. The only part of the app that touches the internet is the optional update check screen, which talks to GitHub to see if a newer version exists.</string>
     <string name="privacy_permissions_title">Permissions we use</string>
-    <string name="privacy_permissions_body">Dincharya asks for a single permission: notifications, so it can remind you about tasks at the right time. It never touches your contacts, location, camera, microphone or files.</string>
+    <string name="privacy_permissions_body">Dincharya asks for the notification permission so it can remind you about tasks at the right time. Updating the app from the update screen also needs Android's install permission, requested only when you choose to update in place. The app never touches your contacts, location, camera, microphone or files.</string>
+    <string name="privacy_learning_title">Learning happens on your phone</string>
+    <string name="privacy_learning_body">Dincharya studies your habits to suggest better times and show you your patterns: best hours, habit strength, how long things really take. A small statistical model is trained on your device, from your own history, in plain code you can read. It is guidance computed for you, not about you: there is no cloud, no account, no upload, and the model cannot be exported or shared. Uninstall the app and both the history and the model are gone.</string>
     <string name="privacy_accounts_title">No accounts, no tracking</string>
     <string name="privacy_accounts_body">There is no sign-up, no analytics and no advertising. Because nothing leaves your device, there is nothing to sell, share or leak.</string>
     <string name="privacy_deletion_title">Deleting the app deletes the data</string>
@@ -138,7 +140,7 @@
     <string name="terms_title">Terms of Use</string>
     <string name="terms_intro">These terms govern your use of Dincharya. By using the app you accept them.</string>
     <string name="terms_app_title">What the app is</string>
-    <string name="terms_app_body">Dincharya is a personal day planner and reminder tool. Suggested times adapt from your own usage patterns; they are guidance, not guarantees.</string>
+    <string name="terms_app_body">Dincharya is a personal day planner and reminder tool. It learns from your own usage to suggest times, score habits and compare estimates with reality. Everything it computes is guidance, not a guarantee; treat it as a second opinion, never an obligation.</string>
     <string name="terms_responsibility_title">Your responsibility</string>
     <string name="terms_responsibility_body">You remain responsible for how you plan your day. Do not rely on the app for medical, legal, financial or safety-critical reminders.</string>
     <string name="terms_warranty_title">No warranty</string>
@@ -159,7 +161,7 @@
     <string name="insights_weekly">This week</string>
     <string name="insights_weekly_line">You completed %1$d tasks, snoozed %2$d times, and %3$d are still pending.</string>
     <string name="insights_heatmap">Consistency</string>
-    <string name="insights_heatmap_hint">One square per day — darker means more completed.</string>
+    <string name="insights_heatmap_hint">One square per day. Darker means more completed.</string>
     <string name="insights_rhythm">Your rhythm</string>
     <string name="insights_habits">Habits</string>
     <string name="insights_habits_hint">How automatic your recurring habits have become, over the last 30 days.</string>
@@ -170,15 +172,15 @@
     <string name="notif_action_snooze_60">1 hour</string>
     <string name="notif_reminder_text">Ready when you are.</string>
     <string name="brief_morning_title">Your day ahead</string>
-    <string name="brief_morning_body">You have %1$d tasks today — first one at %2$s.</string>
-    <string name="brief_morning_empty">Nothing scheduled today. A clear day — add a task only if it earns one.</string>
+    <string name="brief_morning_body">You have %1$d tasks today. First one at %2$s.</string>
+    <string name="brief_morning_empty">Nothing scheduled today. A clear day. Add a task only if it earns one.</string>
     <string name="brief_evening_title">Evening review</string>
     <string name="brief_evening_body">You finished %1$d tasks today. Take 30 seconds to close the day?</string>
 
     <string name="widget_label">Today</string>
     <string name="widget_title">DINCHARYA</string>
     <string name="widget_add">+</string>
-    <string name="widget_empty">All clear — nothing pending.</string>
+    <string name="widget_empty">All clear. Nothing pending.</string>
     <string name="widget_check">○</string>
 
     <string name="settings_data_section">Data</string>
@@ -196,7 +198,7 @@
     <string name="updates_up_to_date">You are up to date.</string>
     <string name="updates_install">Update</string>
     <string name="updates_downloading">Downloading update… %1$d%%</string>
-    <string name="updates_installing">Update downloaded — Android will ask you to confirm the install.</string>
+    <string name="updates_installing">Update downloaded. Android will ask you to confirm the install.</string>
     <string name="updates_reinstall_hint">Open the installer again</string>
     <string name="updates_need_permission">One-time step: Android needs your OK before Dincharya may install updates. Tap "Allow installs", switch ON "Allow from this source", then come back and tap Update.</string>
     <string name="updates_allow_installs">Allow installs</string>

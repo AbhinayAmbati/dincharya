@@ -179,7 +179,7 @@ fun SettingsScreen(navController: NavController) {
         Spacer(Modifier.height(12.dp))
         RuleCard {
             Text(
-                "Dincharya — the schedule that learns you.",
+                "Dincharya: the schedule that learns you.",
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(Modifier.height(8.dp))

@@ -107,7 +107,16 @@ fun TodayScreen(navController: NavController) {
         if (state.overdue.isEmpty() && state.upcoming.isEmpty() &&
             state.anytime.isEmpty() && state.completedToday.isEmpty()
         ) {
-            EmptyState(stringResource(R.string.today_empty))
+            // A day with nothing on it deserves the middle of the screen,
+            // not a lonely line under the header.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                EmptyState(stringResource(R.string.today_empty))
+            }
         } else {
             LazyColumn(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),

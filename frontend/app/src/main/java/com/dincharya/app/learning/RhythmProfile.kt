@@ -86,15 +86,15 @@ object RhythmProfile {
 
         return when {
             chronotype == "early" && share(evening) >= 0.55f ->
-                "You called yourself a morning person — but " +
+                "You called yourself a morning person, but " +
                     "${(share(evening) * 100).toInt()}% of your completions happen after 5 PM."
             chronotype == "late" && share(morning) >= 0.55f ->
-                "You said you're a late riser — but you actually finish " +
+                "You said you're a late riser, but you actually finish " +
                     "${(share(morning) * 100).toInt()}% of your tasks before noon."
             chronotype == "neutral" && share(morning) >= 0.7f ->
-                "You picked 'somewhere in between' — your record says mornings, clearly."
+                "You picked 'somewhere in between'. Your record says mornings, clearly."
             chronotype == "neutral" && share(evening) >= 0.7f ->
-                "You picked 'somewhere in between' — your record says evenings, clearly."
+                "You picked 'somewhere in between'. Your record says evenings, clearly."
             else -> null
         }
     }
@@ -126,7 +126,7 @@ object RhythmProfile {
         if (byDay.size >= 3) {
             val (day, list) = byDay.maxByOrNull { it.value.size }!!.let { it.key to it.value }
             val pct = (list.size.toFloat() / completions.size * 100).toInt()
-            lines.add("${dayNames[day]} are your strongest day — $pct% of everything you finish happens then.")
+            lines.add("${dayNames[day]} are your strongest day: $pct% of everything you finish happens there.")
         }
 
         // Golden window: the two-hour span with the most completions.
@@ -134,7 +134,7 @@ object RhythmProfile {
         val topBucket = byHour.maxByOrNull { it.value.size }
         if (topBucket != null && topBucket.value.size >= 3) {
             val from = topBucket.key * 2
-            lines.add("Your golden window is around %02d:00–%02d:00 — that's when things get done.".format(from, from + 2))
+            lines.add("Your golden window is around %02d:00 to %02d:00. That's when things get done.".format(from, from + 2))
         }
 
         // Momentum: this week vs the previous one.
@@ -143,8 +143,8 @@ object RhythmProfile {
         val lastWeek = completions.count { it.occurredAt in (now - 2 * week) until (now - week) }
         lines.add(
             when {
-                thisWeek > lastWeek && lastWeek > 0 -> "You're up on last week ($thisWeek vs $lastWeek completions) — whatever changed, keep it."
-                thisWeek < lastWeek && lastWeek > 0 -> "Slower than last week ($thisWeek vs $lastWeek) — no verdicts, just an honest mirror."
+                thisWeek > lastWeek && lastWeek > 0 -> "You're up on last week ($thisWeek vs $lastWeek completions). Whatever changed, keep it."
+                thisWeek < lastWeek && lastWeek > 0 -> "Slower than last week ($thisWeek vs $lastWeek). No verdicts, just an honest mirror."
                 else -> "$thisWeek completed this week."
             }
         )
