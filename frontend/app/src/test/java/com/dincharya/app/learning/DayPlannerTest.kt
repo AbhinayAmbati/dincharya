@@ -34,7 +34,7 @@ class DayPlannerTest {
     ) = TaskEntity(
         id = id,
         title = title,
-        category = category,
+        category = category.name,
         scheduledAt = scheduledAt,
         estimatedMinutes = estimatedMinutes,
     )
