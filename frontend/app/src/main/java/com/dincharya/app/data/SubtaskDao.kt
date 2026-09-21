@@ -28,6 +28,10 @@ interface SubtaskDao {
     @Query("SELECT * FROM subtasks WHERE taskId = :taskId ORDER BY id ASC")
     suspend fun forTask(taskId: Long): List<SubtaskEntity>
 
+    /** Remove a task's whole checklist (used when saving edits). */
+    @Query("DELETE FROM subtasks WHERE taskId = :taskId")
+    suspend fun deleteAllForTask(taskId: Long)
+
     /** How many subtasks of a task are done — quick progress signal. */
     @Query("SELECT COUNT(*) FROM subtasks WHERE taskId = :taskId AND isDone = 1")
     suspend fun doneCountForTask(taskId: Long): Int

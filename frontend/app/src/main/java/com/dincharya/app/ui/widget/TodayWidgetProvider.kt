@@ -31,7 +31,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
         val pending = goAsync()
         scope.launch {
             try {
-                val tasks = com.dincharya.app.app.Graph.repository.pendingTasksOnce()
+                val tasks = com.dincharya.app.app.Graph.repository.pendingTodayOnce()
                 appWidgetIds.forEach { id ->
                     appWidgetManager.updateAppWidget(id, buildViews(context, tasks))
                 }
@@ -51,7 +51,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
             if (ids.isEmpty()) return
             // Called from IO coroutines (receivers), so blocking briefly is fine.
             kotlinx.coroutines.runBlocking {
-                val tasks = com.dincharya.app.app.Graph.repository.pendingTasksOnce()
+                val tasks = com.dincharya.app.app.Graph.repository.pendingTodayOnce()
                 ids.forEach { id -> manager.updateAppWidget(id, buildViews(context, tasks)) }
             }
         }

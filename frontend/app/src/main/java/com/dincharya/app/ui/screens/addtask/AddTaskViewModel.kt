@@ -1,6 +1,7 @@
 package com.dincharya.app.ui.screens.addtask
 
 import android.app.Application
+import androidx.lifecycle.SavedStateHandle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +24,28 @@ import java.util.Calendar
  * type. All state is Compose state so the screen updates instantly while
  * the user types.
  */
-class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
+class AddTaskViewModel(
+    app: Application,
+    savedStateHandle: SavedStateHandle,
+) : AndroidViewModel(app) {
+
+    /**
+     * Task being edited, or null when this screen is a plain "add". The id
+     * arrives as the {taskId} path argument of the edit route.
+     */
+    private val editTaskId: Long = savedStateHandle.get<String>("taskId")?.toLongOrNull() ?: 0L
+    val isEdit: Boolean get() = editTaskId != 0L
+
+    /** The original row, once loaded — save() updates it in place. */
+    private var original: TaskEntity? = null
+
+    /** True once the edit form has been populated. */
+    var loaded by mutableStateOf(false)
+        private set
+
+    /** In edit mode: whether the task is currently completed. */
+    var editingCompleted by mutableStateOf(false)
+        private set
 
     var title by mutableStateOf("")
     var category by mutableStateOf(TaskCategory.PERSONAL)
@@ -48,9 +70,39 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
     val durationOptions = listOf(15, 30, 45, 60, 90, 120)
 
     init {
-        // A title shared from another app ("share to Dincharya") seeds the form.
-        app.getSharedTaskTitle()?.let {
-            title = it
+        if (editTaskId != 0L) {
+            // Edit mode: populate the form from the stored task.
+            viewModelScope.launch {
+                val task = Graph.repository.taskById(editTaskId) ?: return@launch
+                original = task
+                title = task.title
+                category = runCatching { TaskCategory.valueOf(task.category) }.getOrDefault(TaskCategory.PERSONAL)
+                priority = runCatching { TaskPriority.valueOf(task.priority) }.getOrDefault(TaskPriority.MEDIUM)
+                durationMinutes = task.estimatedMinutes
+                note = task.note ?: ""
+                repeatRule = runCatching { RepeatRule.valueOf(task.repeatRule) }.getOrDefault(RepeatRule.NONE)
+                val subs = Graph.repository.subtasksFor(editTaskId)
+                subtaskTitles.clear()
+                if (subs.isEmpty()) {
+                    subtaskTitles.add("")
+                } else {
+                    subs.forEach { subtaskTitles.add(it.title) }
+                }
+                task.scheduledAt?.let { at ->
+                    useTime = true
+                    val cal = Calendar.getInstance().apply { timeInMillis = at }
+                    hour = cal.get(Calendar.HOUR_OF_DAY)
+                    minute = cal.get(Calendar.MINUTE)
+                } ?: run { useTime = false }
+                editingCompleted = task.isCompleted
+                loaded = true
+            }
+        } else {
+            // A title shared from another app ("share to Dincharya") seeds the form.
+            app.getSharedTaskTitle()?.let {
+                title = it
+            }
+            loaded = true
         }
     }
 
@@ -65,9 +117,25 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
      * Compute the scheduled time for today at [hour]:[minute]; if that slot
      * has already passed today, roll to tomorrow. (Reminder scheduling in
      * the past would fire immediately, which is never what the user meant.)
+     *
+     * Edits keep one exception: a task already scheduled on a future day
+     * (e.g. a recurring occurrence due next Tuesday) keeps that day — only
+     * the time-of-day changes. Without this, editing a future occurrence
+     * would silently pull it into today.
      */
     private fun computeScheduledAt(): Long? {
         if (!useTime) return null
+        original?.scheduledAt?.let { at ->
+            if (at > System.currentTimeMillis()) {
+                return Calendar.getInstance().apply {
+                    timeInMillis = at
+                    set(Calendar.HOUR_OF_DAY, hour)
+                    set(Calendar.MINUTE, minute)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+            }
+        }
         val cal = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -81,6 +149,26 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
     /** True when the form is complete enough to save. */
     val canSave: Boolean get() = title.isNotBlank()
 
+    /**
+     * Undo the completion of the task being edited: back to pending, the
+     * spawned next occurrence (if any) removed, reminder re-booked when its
+     * slot is still ahead. Used from the edit screen of a completed task.
+     */
+    fun markPending(onDone: () -> Unit) {
+        val existing = original ?: return
+        viewModelScope.launch {
+            val childId = Graph.repository.undoCompletion(existing)
+            childId?.let { ReminderScheduler.cancel(getApplication(), it) }
+            existing.scheduledAt?.let { at ->
+                if (at > System.currentTimeMillis()) {
+                    ReminderScheduler.schedule(getApplication(), existing.id, at)
+                }
+            }
+            editingCompleted = false
+            onDone()
+        }
+    }
+
     /** Adds one more (empty) subtask input row. */
     fun addSubtaskRow() {
         subtaskTitles.add("")
@@ -93,29 +181,54 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
 
     /**
      * Persist the task, log CREATED, save its subtasks, and book the reminder.
+     * In edit mode the existing row is updated in place (subtasks included)
+     * and the reminder is re-booked — or cancelled if the task became anytime.
      */
     fun save(onSaved: () -> Unit) {
-        if (!canSave || saving) return
+        if (!canSave || saving || !loaded) return
         saving = true
         val scheduledAt = computeScheduledAt()
         viewModelScope.launch {
-            val id = Graph.repository.createTask(
-                TaskEntity(
-                    title = title.trim(),
-                    category = category.name,
-                    priority = priority.name,
-                    estimatedMinutes = durationMinutes,
-                    scheduledAt = scheduledAt,
-                    note = note.trim().ifBlank { null },
-                    repeatRule = repeatRule.name,
+            val subtasks = subtaskTitles.map { it.trim() }.filter { it.isNotEmpty() }
+            val existing = original
+            if (existing == null) {
+                val id = Graph.repository.createTask(
+                    TaskEntity(
+                        title = title.trim(),
+                        category = category.name,
+                        priority = priority.name,
+                        estimatedMinutes = durationMinutes,
+                        scheduledAt = scheduledAt,
+                        note = note.trim().ifBlank { null },
+                        repeatRule = repeatRule.name,
+                    )
                 )
-            )
-            Graph.repository.addSubtasks(
-                id,
-                subtaskTitles.map { it.trim() }.filter { it.isNotEmpty() },
-            )
-            scheduledAt?.let {
-                ReminderScheduler.schedule(getApplication(), id, it)
+                Graph.repository.addSubtasks(id, subtasks)
+                scheduledAt?.let {
+                    ReminderScheduler.schedule(getApplication(), id, it)
+                }
+            } else {
+                Graph.repository.updateTask(
+                    existing,
+                    existing.copy(
+                        title = title.trim(),
+                        category = category.name,
+                        priority = priority.name,
+                        estimatedMinutes = durationMinutes,
+                        scheduledAt = scheduledAt,
+                        note = note.trim().ifBlank { null },
+                        repeatRule = repeatRule.name,
+                    ),
+                )
+                Graph.repository.replaceSubtasks(existing.id, subtasks)
+                // Re-book: cancel first so a moved slot cannot fire twice,
+                // and only book future slots (past ones would fire at once).
+                ReminderScheduler.cancel(getApplication(), existing.id)
+                scheduledAt?.let {
+                    if (it > System.currentTimeMillis()) {
+                        ReminderScheduler.schedule(getApplication(), existing.id, it)
+                    }
+                }
             }
             onSaved()
         }

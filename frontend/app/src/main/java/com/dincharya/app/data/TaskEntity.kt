@@ -51,4 +51,11 @@ data class TaskEntity(
 
     /** [RepeatRule] name — recurring tasks spawn their next occurrence on completion. */
     val repeatRule: String = RepeatRule.NONE.name,
+
+    /**
+     * For a task spawned by completing a recurring one: the id of the task
+     * that spawned it. Undoing that completion deletes this child so the
+     * habit chain rolls back cleanly. Null for ordinary tasks.
+     */
+    val spawnedBy: Long? = null,
 )

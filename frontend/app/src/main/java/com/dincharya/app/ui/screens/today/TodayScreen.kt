@@ -34,6 +34,7 @@ import com.dincharya.app.ui.components.RuleCard
 import com.dincharya.app.ui.components.SectionHeader
 import com.dincharya.app.ui.components.TaskRow
 import com.dincharya.app.ui.navigation.Screen
+import com.dincharya.app.ui.navigation.editRoute
 
 /**
  * The Today screen — the app's home.
@@ -58,7 +59,6 @@ fun TodayScreen(navController: NavController) {
     val overdueTitle = stringResource(R.string.section_overdue)
     val upcomingTitle = stringResource(R.string.section_upcoming)
     val anytimeTitle = stringResource(R.string.section_anytime)
-    val laterTitle = stringResource(R.string.section_later)
     val doneTitle = stringResource(R.string.section_done_today)
     val deleteLabel = stringResource(R.string.task_delete)
 
@@ -82,7 +82,7 @@ fun TodayScreen(navController: NavController) {
 
         // ---- Task list ----
         if (state.overdue.isEmpty() && state.upcoming.isEmpty() &&
-            state.anytime.isEmpty() && state.later.isEmpty() && state.completedToday.isEmpty()
+            state.anytime.isEmpty() && state.completedToday.isEmpty()
         ) {
             EmptyState(stringResource(R.string.today_empty))
         } else {
@@ -101,7 +101,6 @@ fun TodayScreen(navController: NavController) {
                                     // Find the task in any section to apply the move.
                                     val task = state.overdue.firstOrNull { it.id == taskId }
                                         ?: state.upcoming.firstOrNull { it.id == taskId }
-                                        ?: state.later.firstOrNull { it.id == taskId }
                                         ?: state.anytime.firstOrNull { it.id == taskId }
                                     task?.let { viewModel.applySuggestion(it, adaptation) }
                                 },
@@ -117,6 +116,7 @@ fun TodayScreen(navController: NavController) {
                         onToggleComplete = { viewModel.completeTask(task) },
                         onFocus = { navController.navigate(Screen.Focus.route) },
                         onDelete = { taskToDelete = task },
+                        onOpen = { navController.navigate(editRoute(task.id)) },
                     )
                 }
                 taskSection(upcomingTitle, state.upcoming) { task ->
@@ -125,6 +125,7 @@ fun TodayScreen(navController: NavController) {
                         onToggleComplete = { viewModel.completeTask(task) },
                         onFocus = { navController.navigate(Screen.Focus.route) },
                         onDelete = { taskToDelete = task },
+                        onOpen = { navController.navigate(editRoute(task.id)) },
                     )
                 }
                 taskSection(anytimeTitle, state.anytime) { task ->
@@ -133,22 +134,18 @@ fun TodayScreen(navController: NavController) {
                         onToggleComplete = { viewModel.completeTask(task) },
                         onFocus = { navController.navigate(Screen.Focus.route) },
                         onDelete = { taskToDelete = task },
+                        onOpen = { navController.navigate(editRoute(task.id)) },
                     )
                 }
-                taskSection(laterTitle, state.later) { task ->
-                    TaskRow(
-                        task = task,
-                        onToggleComplete = { viewModel.completeTask(task) },
-                        onFocus = { navController.navigate(Screen.Focus.route) },
-                        onDelete = { taskToDelete = task },
-                    )
-                }
+                // Done today: tapping the circle undoes the completion (and
+                // removes the occurrence it spawned); tapping the row edits.
                 taskSection(doneTitle, state.completedToday) { task ->
                     TaskRow(
                         task = task,
-                        onToggleComplete = { viewModel.completeTask(task) },
+                        onToggleComplete = { viewModel.undoTask(task) },
                         onFocus = { },
                         onDelete = { taskToDelete = task },
+                        onOpen = { navController.navigate(editRoute(task.id)) },
                     )
                 }
             }

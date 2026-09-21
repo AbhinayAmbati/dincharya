@@ -21,8 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.remember
 import com.dincharya.app.data.TaskEntity
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -73,8 +75,9 @@ fun MomentumBar(completed: Int, total: Int, modifier: Modifier = Modifier) {
 }
 
 /**
- * One task row: check circle, title, meta line (time / snooze count),
- * plus small Focus and Delete affordances.
+ * One task row: check circle, title, meta line (time / date / snooze count),
+ * plus small Focus and Delete affordances. Tapping the row itself opens the
+ * task for editing (pending and completed alike).
  *
  * Completed state is shown with a filled circle + strikethrough — shape and
  * weight, never colour, per the accessibility rules in CONTRIBUTING.md.
@@ -86,8 +89,21 @@ fun TaskRow(
     onFocus: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpen: () -> Unit = {},
 ) {
     val timeFormat = rememberTimeFormat()
+    // Tasks not scheduled today (e.g. an overdue leftover from Monday)
+    // carry their date in the meta line so "09:30" is never ambiguous.
+    val dateFormat = remember { SimpleDateFormat("EEE d MMM", Locale.getDefault()) }
+    val scheduledToday = task.scheduledAt?.let { at ->
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val dayStart = cal.timeInMillis
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+        at in dayStart until cal.timeInMillis
+    } ?: true
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -117,7 +133,8 @@ fun TaskRow(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 4.dp, end = 8.dp),
+                .padding(start = 4.dp, end = 8.dp)
+                .clickable(onClick = onOpen),
         ) {
             Text(
                 text = task.title,
@@ -128,7 +145,13 @@ fun TaskRow(
             )
             // Meta line: scheduled time and snooze badge.
             val meta = buildList {
-                task.scheduledAt?.let { add(timeFormat.format(Date(it))) }
+                task.scheduledAt?.let { at ->
+                    if (scheduledToday) {
+                        add(timeFormat.format(Date(at)))
+                    } else {
+                        add(dateFormat.format(Date(at)) + "  " + timeFormat.format(Date(at)))
+                    }
+                }
                 if (task.snoozeCount > 0) add("snoozed ${task.snoozeCount}x")
             }.joinToString("  ·  ")
             if (meta.isNotEmpty()) {

@@ -15,6 +15,12 @@ sealed class Screen(val route: String) {
     /** Create a new task. */
     object AddTask : Screen("add")
 
+    /**
+     * Edit an existing task (pending or completed). The Add Task screen is
+     * reused with the form pre-filled; saving updates instead of inserting.
+     */
+    object EditTask : Screen("edit/{taskId}")
+
     /** Behavioural patterns — the honest mirror. */
     object Insights : Screen("insights")
 
@@ -36,3 +42,6 @@ sealed class Screen(val route: String) {
     /** Update checker — current vs. latest GitHub release (opened from Settings). */
     object Updates : Screen("updates")
 }
+
+/** Route for editing task [id] — see [Screen.EditTask]. */
+fun editRoute(id: Long): String = "edit/$id"

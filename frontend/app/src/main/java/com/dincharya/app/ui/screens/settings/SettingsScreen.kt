@@ -54,7 +54,7 @@ import com.dincharya.app.ui.navigation.Screen
 import kotlinx.coroutines.launch
 
 /** App version shown in About — keep in sync with app/build.gradle.kts. */
-private const val APP_VERSION = "0.2.0"
+private const val APP_VERSION = "0.2.1"
 
 /**
  * Settings screen: appearance, reminders, and the privacy promise.

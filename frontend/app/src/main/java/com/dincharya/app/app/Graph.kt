@@ -38,7 +38,7 @@ object Graph {
                 DincharyaDatabase::class.java,
                 "dincharya.db",
             )
-                .addMigrations(DincharyaDatabase.MIGRATION_1_2)
+                .addMigrations(DincharyaDatabase.MIGRATION_1_2, DincharyaDatabase.MIGRATION_2_3)
                 .build()
             settings = SettingsStore(appContext)
             repository = TaskRepository(database.taskDao(), database.taskEventDao(), database.subtaskDao())

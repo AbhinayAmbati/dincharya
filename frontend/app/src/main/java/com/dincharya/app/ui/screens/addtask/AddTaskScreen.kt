@@ -57,7 +57,7 @@ fun AddTaskScreen(navController: NavController) {
     ) {
         Spacer(Modifier.height(20.dp))
         Text(
-            stringResource(R.string.add_title_header),
+            stringResource(if (viewModel.isEdit) R.string.add_edit_header else R.string.add_title_header),
             style = MaterialTheme.typography.headlineSmall,
         )
         Spacer(Modifier.height(16.dp))
@@ -180,11 +180,24 @@ fun AddTaskScreen(navController: NavController) {
         // ---- Save ----
         Button(
             onClick = { viewModel.save(onSaved = { navController.popBackStack() }) },
-            enabled = viewModel.canSave,
+            enabled = viewModel.canSave && viewModel.loaded,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-        ) { Text(stringResource(R.string.add_save), style = MaterialTheme.typography.titleMedium) }
+        ) {
+            Text(
+                stringResource(if (viewModel.isEdit) R.string.add_save_edit else R.string.add_save),
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
+        // A completed task being edited can be reopened right here.
+        if (viewModel.isEdit && viewModel.editingCompleted) {
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = { viewModel.markPending(onDone = { navController.popBackStack() }) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.add_mark_pending)) }
+        }
         Spacer(Modifier.height(24.dp))
     }
 }

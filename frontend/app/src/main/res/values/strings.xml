@@ -193,6 +193,10 @@
     <string name="updates_view_page">View release page</string>
     <string name="updates_check_again">Check again</string>
 
+    <string name="add_edit_header">Edit task</string>
+    <string name="add_save_edit">Save changes</string>
+    <string name="add_mark_pending">Mark as not done</string>
+
     <string name="shortcut_add_short">Add task</string>
     <string name="shortcut_add_long">Add a new task</string>
 </resources>

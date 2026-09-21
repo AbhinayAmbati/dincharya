@@ -23,15 +23,16 @@ import java.util.Locale
 /**
  * Immutable snapshot of the Today screen.
  *
- * Tasks are split by urgency: overdue (scheduled before today), upcoming
- * (later today), later (after today) and anytime (no scheduled time).
+ * Tasks are split by urgency: missed (scheduled before now — including
+ * leftovers from earlier days), upcoming (later today) and anytime (no
+ * scheduled time). Future-dated tasks are deliberately NOT shown: a task
+ * appears on the day it occurs, never before.
  * Each suggestion pairs the task with the [Adaptation] proposed for it.
  */
 data class TodayUiState(
     val dateTitle: String = "",
     val overdue: List<TaskEntity> = emptyList(),
     val upcoming: List<TaskEntity> = emptyList(),
-    val later: List<TaskEntity> = emptyList(),
     val anytime: List<TaskEntity> = emptyList(),
     val completedToday: List<TaskEntity> = emptyList(),
     val suggestions: Map<Long, Adaptation> = emptyMap(),
@@ -98,11 +99,12 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
         val upcoming = pending.filter { it.scheduledAt != null && it.scheduledAt in dayStart until dayEnd && it.scheduledAt >= now }
         // Scheduled today but its slot has already passed without completion.
         val missedToday = pending.filter { it.scheduledAt != null && it.scheduledAt in dayStart until now }
-        val later = pending.filter { it.scheduledAt != null && it.scheduledAt >= dayEnd }
         val anytime = pending.filter { it.scheduledAt == null }
 
-        // Rule-engine suggestions, one per task, minus dismissed ones.
-        val suggestions = pending
+        // Rule-engine suggestions, one per *visible* task, minus dismissed
+        // ones — future occurrences stay out of sight and out of the way.
+        val visible = overdue + missedToday + upcoming + anytime
+        val suggestions = visible
             .filter { it.id !in dismissed }
             .mapNotNull { task -> AdaptationEngine.evaluate(task, events)?.let { task.id to it } }
             .toMap()
@@ -111,7 +113,6 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
             dateTitle = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date()),
             overdue = (overdue + missedToday).distinctBy { it.id },
             upcoming = upcoming,
-            later = later,
             anytime = anytime,
             completedToday = completed,
             suggestions = suggestions,
@@ -123,6 +124,23 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             repository.completeTask(task)
             ReminderScheduler.cancel(getApplication(), task.id)
+        }
+    }
+
+    /**
+     * Undo a completion: the task returns to pending, the spawned next
+     * occurrence (recurring tasks) is removed with its reminder, and this
+     * task's own reminder comes back if its slot is still ahead of us.
+     */
+    fun undoTask(task: TaskEntity) {
+        viewModelScope.launch {
+            val childId = repository.undoCompletion(task)
+            childId?.let { ReminderScheduler.cancel(getApplication(), it) }
+            task.scheduledAt?.let { at ->
+                if (at > System.currentTimeMillis()) {
+                    ReminderScheduler.schedule(getApplication(), task.id, at)
+                }
+            }
         }
     }
 

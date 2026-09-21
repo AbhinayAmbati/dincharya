@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  */
 @Database(
     entities = [TaskEntity::class, TaskEventEntity::class, SubtaskEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class DincharyaDatabase : RoomDatabase() {
@@ -25,6 +25,16 @@ abstract class DincharyaDatabase : RoomDatabase() {
     abstract fun subtaskDao(): SubtaskDao
 
     companion object {
+        /**
+         * v2 -> v3: tasks spawned by a recurring completion remember their
+         * parent (undo support). Nullable, no default needed for old rows.
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE tasks ADD COLUMN spawnedBy INTEGER")
+            }
+        }
+
         /**
          * v1 -> v2: notes + repeat rules on tasks, and the subtasks table.
          * New task columns are nullable / defaulted so old rows stay valid.

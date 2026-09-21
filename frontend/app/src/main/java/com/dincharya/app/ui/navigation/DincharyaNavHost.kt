@@ -213,6 +213,7 @@ fun DincharyaNavHost(navController: NavHostController, modifier: Modifier = Modi
         composable(Screen.Onboarding.route) { OnboardingScreen(navController) }
         composable(Screen.Today.route) { TodayScreen(navController) }
         composable(Screen.AddTask.route) { AddTaskScreen(navController) }
+        composable(Screen.EditTask.route) { AddTaskScreen(navController) }
         composable(Screen.Insights.route) { InsightsScreen(navController) }
         composable(Screen.Focus.route) { FocusScreen(navController) }
         composable(Screen.Review.route) { ReviewScreen(navController) }
