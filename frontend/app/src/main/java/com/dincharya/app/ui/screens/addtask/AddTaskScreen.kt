@@ -164,14 +164,14 @@ fun AddTaskScreen(navController: NavController) {
                     label = stringResource(R.string.add_hour),
                     value = viewModel.hour,
                     range = 0..23,
-                    onChange = { viewModel.setHour(it) },
+                    onChange = { viewModel.pickHour(it) },
                 )
                 Text(":", style = MaterialTheme.typography.titleLarge)
                 Stepper(
                     label = stringResource(R.string.add_minute),
                     value = viewModel.minute,
                     range = 0..59 step 5,
-                    onChange = { viewModel.setMinute(it) },
+                    onChange = { viewModel.pickMinute(it) },
                 )
             }
         }

@@ -83,12 +83,12 @@ class AddTaskViewModel(
         }
     }
 
-    fun setHour(value: Int) {
+    fun pickHour(value: Int) {
         hour = value
         timeTouched = true
     }
 
-    fun setMinute(value: Int) {
+    fun pickMinute(value: Int) {
         minute = value
         timeTouched = true
     }
