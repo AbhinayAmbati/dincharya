@@ -156,6 +156,41 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
+     * Install via the platform PackageInstaller session API — the same
+     * mechanism F-Droid-class apps use. It does not depend on the ROM's
+     * installer answering an ordinary "open this APK" intent (some ROMs,
+     * e.g. Indus OS, never do and show a dead-end "Open with" chooser
+     * instead). Android still shows its own confirmation dialog; with the
+     * one-time "install unknown apps" consent given, that is all she wrote.
+     */
+    private fun installWithSession(file: File) {
+        val app = getApplication<Application>()
+        val installer = app.packageManager.packageInstaller
+        val session = installer.openSession(
+            installer.createSession(
+                PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+            )
+        )
+        try {
+            file.inputStream().use { input ->
+                session.openWrite("dincharya-update").use { output ->
+                    input.copyTo(output)
+                    session.fsync(output)
+                }
+            }
+            val sender = PendingIntent.getBroadcast(
+                app,
+                1001,
+                Intent(app, InstallResultReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+            ).intentSender
+            session.commit(sender)
+        } finally {
+            session.close()
+        }
+    }
+
+    /**
      * Open Android's "Install unknown apps" screen for this app, where the
      * one-time consent lives. The user grants it there, returns, and taps
      * Update again — the downloaded APK is remembered, so no re-download.
