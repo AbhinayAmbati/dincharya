@@ -173,7 +173,7 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
         )
         try {
             file.inputStream().use { input ->
-                session.openWrite("dincharya-update").use { output ->
+                session.openWrite("dincharya-update", 0, -1).use { output ->
                     input.copyTo(output)
                     session.fsync(output)
                 }
