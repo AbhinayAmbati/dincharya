@@ -212,6 +212,19 @@ private fun UpdateControls(
             ) { Text(stringResource(R.string.updates_install)) }
         }
 
+        is UpdateViewModel.InstallState.NeedsPermission -> {
+            Text(
+                stringResource(R.string.updates_need_permission),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(6.dp))
+            Button(
+                onClick = { viewModel.openInstallPermissionSettings() },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.updates_allow_installs)) }
+        }
+
         is UpdateViewModel.InstallState.Idle -> {
             Button(
                 onClick = { viewModel.downloadAndInstall(apkUrl) },
@@ -224,6 +237,10 @@ private fun UpdateControls(
         onClick = { open(context, pageUrl) },
         modifier = Modifier.fillMaxWidth(),
     ) { Text(stringResource(R.string.updates_view_page)) }
+    TextButton(
+        onClick = { open(context, apkUrl) },
+        modifier = Modifier.fillMaxWidth(),
+    ) { Text(stringResource(R.string.updates_browser_fallback), style = MaterialTheme.typography.labelMedium) }
 }
 
 /**

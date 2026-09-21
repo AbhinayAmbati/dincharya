@@ -193,6 +193,9 @@
     <string name="updates_downloading">Downloading update… %1$d%%</string>
     <string name="updates_installing">Update downloaded — Android will ask you to confirm the install.</string>
     <string name="updates_reinstall_hint">Open the installer again</string>
+    <string name="updates_need_permission">One-time step: Android needs your OK before Dincharya may install updates. Tap "Allow installs", switch ON "Allow from this source", then come back and tap Update.</string>
+    <string name="updates_allow_installs">Allow installs</string>
+    <string name="updates_browser_fallback">Download in your browser instead</string>
     <string name="updates_view_page">View release page</string>
     <string name="updates_check_again">Check again</string>
 

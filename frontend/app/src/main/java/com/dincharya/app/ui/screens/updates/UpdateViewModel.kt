@@ -2,6 +2,8 @@ package com.dincharya.app.ui.screens.updates
 
 import android.app.Application
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -74,6 +76,14 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
         /** APK download in progress, [percent] of the way there. */
         data class Downloading(val percent: Int) : InstallState
 
+        /**
+         * Android has not been given the one-time "install unknown apps"
+         * consent for Dincharya. Without it the package installer will not
+         * even appear — Android shows a dead-end "Open with" chooser of
+         * random apps instead. The user must flip the toggle in Settings.
+         */
+        object NeedsPermission : InstallState
+
         /** Download finished and the system installer has been opened —
          *  the rest is in Android's (and the user's) hands. */
         object AwaitingInstall : InstallState
@@ -106,18 +116,33 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** The already-downloaded APK, kept so granting the install permission
+     *  does not force a second download. */
+    private var downloadedApk: java.io.File? = null
+
     /**
      * Download the release APK into the app's private cache and hand it to
-     * Android's package installer. The first time, Android asks the user to
-     * allow installs from Dincharya once — deliberately one more consent
-     * step, in keeping with "the user stays in charge".
+     * Android's package installer.
+     *
+     * Order matters: FIRST Android must have been given the one-time
+     * "allow installs from Dincharya" consent — without it the package
+     * installer never appears and Android shows a useless "Open with"
+     * chooser instead. When the consent is missing we stop and send the
+     * user to the exact Settings toggle (see [openInstallPermissionSettings]),
+     * so the flow is: tap Update → allow once in Settings → tap Update again.
      */
     fun downloadAndInstall(apkUrl: String) {
         if (_install.value is InstallState.Downloading) return
         _install.value = InstallState.Downloading(0)
         viewModelScope.launch {
             try {
-                val file = withContext(Dispatchers.IO) { downloadApk(apkUrl) }
+                if (!getApplication<Application>().packageManager.canRequestPackageInstalls()) {
+                    _install.value = InstallState.NeedsPermission
+                    return@launch
+                }
+                val file = downloadedApk?.takeIf { it.exists() }
+                    ?: withContext(Dispatchers.IO) { downloadApk(apkUrl) }
+                downloadedApk = file
                 _install.value = InstallState.AwaitingInstall
                 launchInstaller(file)
             } catch (e: Exception) {
@@ -126,6 +151,20 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
         }
+    }
+
+    /**
+     * Open Android's "Install unknown apps" screen for this app, where the
+     * one-time consent lives. The user grants it there, returns, and taps
+     * Update again — the downloaded APK is remembered, so no re-download.
+     */
+    fun openInstallPermissionSettings() {
+        val app = getApplication<Application>()
+        val intent = Intent(
+            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+            Uri.parse("package:${app.packageName}"),
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { app.startActivity(intent) }
     }
 
     /** Stream the APK to cache/updates/, reporting progress along the way. */
