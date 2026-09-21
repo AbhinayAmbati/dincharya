@@ -15,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,7 +49,8 @@ fun InsightsScreen(navController: NavController) {
     val viewModel: InsightsViewModel = viewModel()
     val state by viewModel.uiState.collectAsState()
 
-    // Pull down from the top to recompute the mirror on demand.
+    // Pull down from the top to recompute the mirror on demand. Deliberately
+    // invisible: no spinner circle sits on the content — it's instant.
     val pullState = rememberPullToRefreshState()
     if (pullState.isRefreshing) {
         LaunchedEffect(true) {
@@ -168,11 +168,6 @@ fun InsightsScreen(navController: NavController) {
         Spacer(Modifier.height(32.dp))
         }
 
-        // The pull-to-refresh spinner sits above the content, centred.
-        PullToRefreshContainer(
-            state = pullState,
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
     }
 }
 

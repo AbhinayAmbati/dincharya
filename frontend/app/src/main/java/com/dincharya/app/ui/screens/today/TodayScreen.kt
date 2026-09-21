@@ -17,7 +17,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,8 +57,9 @@ fun TodayScreen(navController: NavController) {
     val viewModel: TodayViewModel = viewModel()
     val state by viewModel.uiState.collectAsState()
 
-    // Pull down from the top to roll the day window and refresh (also covers
-    // the app staying open past midnight).
+    // Pull down from the top to refresh (also rolls the day window if the
+    // app stayed open past midnight). Deliberately invisible: no spinner
+    // circle sits on the content — the refresh is instant.
     val pullState = rememberPullToRefreshState()
     if (pullState.isRefreshing) {
         LaunchedEffect(true) {
@@ -175,11 +175,6 @@ fun TodayScreen(navController: NavController) {
         }
     }
 
-        // The pull-to-refresh spinner sits above the content, centred.
-        PullToRefreshContainer(
-            state = pullState,
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
     }
 
     // ---- Delete confirmation ----
