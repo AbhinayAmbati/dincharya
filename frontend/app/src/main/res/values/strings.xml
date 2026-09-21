@@ -189,7 +189,10 @@
     <string name="updates_checking">Checking…</string>
     <string name="updates_new_available">New version available: %1$s</string>
     <string name="updates_up_to_date">You are up to date.</string>
-    <string name="updates_download">Download APK</string>
+    <string name="updates_install">Update</string>
+    <string name="updates_downloading">Downloading update… %1$d%%</string>
+    <string name="updates_installing">Update downloaded — Android will ask you to confirm the install.</string>
+    <string name="updates_reinstall_hint">Open the installer again</string>
     <string name="updates_view_page">View release page</string>
     <string name="updates_check_again">Check again</string>
 

@@ -1,14 +1,19 @@
 package com.dincharya.app.ui.screens.updates
 
 import android.app.Application
+import android.content.Intent
+import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.dincharya.app.app.APP_VERSION
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -17,10 +22,10 @@ import java.net.URL
  * The latest release, as far as GitHub's public API reports it.
  */
 data class LatestRelease(
-    /** e.g. "v0.2.0" (tag, without a leading 'v' on the number). */
+    /** e.g. "v0.2.1" (tag, without a leading 'v' on the number). */
     val version: String,
 
-    /** Human release name, e.g. "Dincharya v0.2.0 — Habits". */
+    /** Human release name, e.g. "Dincharya v0.2.1 — Habits". */
     val name: String,
 
     /** Markdown release notes body. */
@@ -38,8 +43,9 @@ data class LatestRelease(
  *
  * The app is local-first and offline; this screen is the ONE place that
  * talks to the network — it asks GitHub for the latest published release
- * and shows the notes, so the user can decide whether to download. Nothing
- * is ever downloaded or installed automatically.
+ * and shows the notes. Nothing happens without a tap: the user checks, the
+ * user presses Update, and even then Android's own installer has the final
+ * word. No data ever leaves the phone; only version info comes in.
  */
 class UpdateViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -61,8 +67,26 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
         data class Error(val message: String) : State
     }
 
+    sealed interface InstallState {
+        /** No update in progress. */
+        object Idle : InstallState
+
+        /** APK download in progress, [percent] of the way there. */
+        data class Downloading(val percent: Int) : InstallState
+
+        /** Download finished and the system installer has been opened —
+         *  the rest is in Android's (and the user's) hands. */
+        object AwaitingInstall : InstallState
+
+        /** The download or installer hand-off failed. */
+        data class Failed(val message: String) : InstallState
+    }
+
     private val _state = MutableStateFlow<State>(State.Idle)
     val state: StateFlow<State> = _state
+
+    private val _install = MutableStateFlow<InstallState>(InstallState.Idle)
+    val install: StateFlow<InstallState> = _install
 
     fun check() {
         _state.value = State.Checking
@@ -80,6 +104,81 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
                 _state.value = State.Error("Unexpected response from GitHub.")
             }
         }
+    }
+
+    /**
+     * Download the release APK into the app's private cache and hand it to
+     * Android's package installer. The first time, Android asks the user to
+     * allow installs from Dincharya once — deliberately one more consent
+     * step, in keeping with "the user stays in charge".
+     */
+    fun downloadAndInstall(apkUrl: String) {
+        if (_install.value is InstallState.Downloading) return
+        _install.value = InstallState.Downloading(0)
+        viewModelScope.launch {
+            try {
+                val file = withContext(Dispatchers.IO) { downloadApk(apkUrl) }
+                _install.value = InstallState.AwaitingInstall
+                launchInstaller(file)
+            } catch (e: Exception) {
+                _install.value = InstallState.Failed(
+                    "Download failed — check your connection and try again."
+                )
+            }
+        }
+    }
+
+    /** Stream the APK to cache/updates/, reporting progress along the way. */
+    private fun downloadApk(apkUrl: String): File {
+        val dir = File(getApplication<Application>().cacheDir, "updates").apply { mkdirs() }
+        val target = File(dir, "dincharya-update.apk")
+        if (target.exists()) target.delete()
+
+        val connection = URL(apkUrl).openConnection() as HttpURLConnection
+        try {
+            connection.connectTimeout = 15_000
+            connection.readTimeout = 30_000
+            connection.setRequestProperty("User-Agent", "Dincharya-Android")
+            if (connection.responseCode !in 200..299) throw IOException("HTTP ${connection.responseCode}")
+
+            val total = connection.contentLengthLong
+            connection.inputStream.use { input ->
+                FileOutputStream(target).use { output ->
+                    val buffer = ByteArray(16 * 1024)
+                    var done = 0L
+                    var lastPercent = -1
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        output.write(buffer, 0, read)
+                        done += read
+                        if (total > 0) {
+                            val percent = (done * 100 / total).toInt().coerceIn(0, 100)
+                            if (percent != lastPercent) {
+                                lastPercent = percent
+                                _install.value = InstallState.Downloading(percent)
+                            }
+                        }
+                    }
+                }
+            }
+            if (total <= 0) _install.value = InstallState.Downloading(100)
+        } finally {
+            connection.disconnect()
+        }
+        return target
+    }
+
+    /** Open Android's installer for the downloaded file. */
+    private fun launchInstaller(file: File) {
+        val app = getApplication<Application>()
+        val uri = FileProvider.getUriForFile(app, "${app.packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android-package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        runCatching { app.startActivity(intent) }
+            .onFailure { _install.value = InstallState.Failed("Could not open the installer.") }
     }
 
     /** Plain numeric compare of "v0.2.1" vs "0.2.0" style versions. */
@@ -125,10 +224,5 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
         } finally {
             connection.disconnect()
         }
-    }
-
-    companion object {
-        /** Keep in sync with app/build.gradle.kts. */
-        const val APP_VERSION = "0.2.0"
     }
 }

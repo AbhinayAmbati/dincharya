@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Local paths the FileProvider may share — the exports cache only. -->
+<!-- Local paths the FileProvider may share: the exports cache and the
+     downloaded update APK (handed to Android's installer, nothing else). -->
 <paths>
     <cache-path name="exports" path="exports/" />
+    <cache-path name="updates" path="updates/" />
 </paths>

@@ -15,6 +15,12 @@
     <!-- Update check only (see the comment at the top of this file). -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Also update-check only: lets the Update screen hand the downloaded
+         APK to Android's own installer. Android still asks the user ONCE
+         for permission before anything actually installs; nothing ever
+         installs silently. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application
         android:name=".DincharyaApplication"
         android:allowBackup="true"

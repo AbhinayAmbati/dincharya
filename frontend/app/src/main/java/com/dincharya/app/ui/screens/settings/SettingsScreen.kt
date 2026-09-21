@@ -53,9 +53,6 @@ import com.dincharya.app.ui.components.SectionHeader
 import com.dincharya.app.ui.navigation.Screen
 import kotlinx.coroutines.launch
 
-/** App version shown in About — keep in sync with app/build.gradle.kts. */
-private const val APP_VERSION = "0.2.1"
-
 /**
  * Settings screen: appearance, reminders, and the privacy promise.
  *
@@ -193,7 +190,7 @@ fun SettingsScreen(navController: NavController) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(R.string.settings_version, APP_VERSION),
+                stringResource(R.string.settings_version, com.dincharya.app.app.APP_VERSION),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
