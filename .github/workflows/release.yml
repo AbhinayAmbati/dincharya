@@ -1,13 +1,5 @@
-# Dincharya — Release APK.
-# When a release is published on GitHub, build the APK and attach it to
-# that release so users get a direct download link on the Releases page.
-#
-# Notes:
-#  - Triggering on the release event (not a tag push) means the release
-#    entry exists before the build starts, so the upload never races.
-#  - The APK is signed with the real release key (GitHub secrets), so
-#    updates install over older versions — no more uninstalls.
-#  - Invoked via `bash ./gradlew` like the CI build, for the same reason.
+# Dincharya release APK builder.
+# On release published, build the signed APK and attach it to the release.
 name: Release APK
 
 on:
@@ -29,19 +21,17 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@v4
 
-     - name: Set up JDK 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      # Caches the Gradle user home between runs; speeds up builds massively.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      # The signing key itself never touches the repo — it lives in these
-      # secrets and is handed to Gradle as environment variables, which
-      # app/build.gradle.kts decodes and wires into the signing config.
+      # The signing key never touches the repo. It lives in GitHub secrets
+      # and is handed to Gradle as environment variables.
       - name: Build release APK (signed)
         env:
           SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
@@ -50,10 +40,8 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: bash ./gradlew --no-daemon assembleRelease
 
-      # Rename so the asset reads "Dincharya-v0.2.0.apk" instead of
-        # "app-release.apk" on the Releases page.
       - name: Rename APK for the release
-        run: cp app/build/outputs/apk/release/app-release.apk "Dincharya-${ github.event.release.tag_name }}.apk"
+        run: cp app/build/outputs/apk/release/app-release.apk "Dincharya-${{ github.event.release.tag_name }}.apk"
 
       - name: Attach APK to the release
         uses: softprops/action-gh-release@v2
