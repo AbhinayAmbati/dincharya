@@ -69,6 +69,11 @@
                 android:resource="@xml/widget_info" />
         </receiver>
 
+        <!-- Verdicts from the in-app updater's PackageInstaller session. -->
+        <receiver
+            android:name=".notifications.InstallResultReceiver"
+            android:exported="false" />
+
         <!-- Complete-from-widget taps. -->
         <receiver
             android:name=".ui.widget.WidgetActionReceiver"

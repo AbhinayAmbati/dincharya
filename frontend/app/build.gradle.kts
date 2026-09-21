@@ -25,8 +25,8 @@ android {
         applicationId = "com.dincharya.app"
         minSdk = 26          // Adaptive icons without legacy PNGs; java.time available
         targetSdk = 34
-        versionCode = 7
-        versionName = "0.2.5"
+        versionCode = 8
+        versionName = "0.2.6"
         vectorDrawables { useSupportLibrary = true }
     }
 

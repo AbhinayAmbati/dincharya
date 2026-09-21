@@ -8,4 +8,4 @@ package com.dincharya.app.app
  * two separate copies once drifted out of sync and made the update screen
  * report a false "new version available".
  */
-const val APP_VERSION = "0.2.5"
+const val APP_VERSION = "0.2.6"

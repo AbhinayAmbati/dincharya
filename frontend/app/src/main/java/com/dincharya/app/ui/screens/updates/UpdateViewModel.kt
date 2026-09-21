@@ -1,10 +1,12 @@
 package com.dincharya.app.ui.screens.updates
 
 import android.app.Application
+import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.net.Uri
 import android.provider.Settings
-import androidx.core.content.FileProvider
+import com.dincharya.app.notifications.InstallResultReceiver
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dincharya.app.app.APP_VERSION
@@ -144,7 +146,7 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
                     ?: withContext(Dispatchers.IO) { downloadApk(apkUrl) }
                 downloadedApk = file
                 _install.value = InstallState.AwaitingInstall
-                launchInstaller(file)
+                withContext(Dispatchers.IO) { installWithSession(file) }
             } catch (e: Exception) {
                 _install.value = InstallState.Failed(
                     "Download failed — check your connection and try again."
@@ -206,18 +208,6 @@ class UpdateViewModel(app: Application) : AndroidViewModel(app) {
             connection.disconnect()
         }
         return target
-    }
-
-    /** Open Android's installer for the downloaded file. */
-    private fun launchInstaller(file: File) {
-        val app = getApplication<Application>()
-        val uri = FileProvider.getUriForFile(app, "${app.packageName}.fileprovider", file)
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android-package-archive")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        runCatching { app.startActivity(intent) }
-            .onFailure { _install.value = InstallState.Failed("Could not open the installer.") }
     }
 
     /** Plain numeric compare of "v0.2.1" vs "0.2.0" style versions. */
