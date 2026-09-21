@@ -5,8 +5,8 @@
 # Notes:
 #  - Triggering on the release event (not a tag push) means the release
 #    entry exists before the build starts, so the upload never races.
-#  - Ships the release build (minified, debug-signed so it installs
-#    without a store). A proper keystore comes with the v0.2 work.
+#  - The APK is signed with the real release key (GitHub secrets), so
+#    updates install over older versions — no more uninstalls.
 #  - Invoked via `bash ./gradlew` like the CI build, for the same reason.
 name: Release APK
 
@@ -29,7 +29,7 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+     - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -39,13 +39,21 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build release APK
+      # The signing key itself never touches the repo — it lives in these
+      # secrets and is handed to Gradle as environment variables, which
+      # app/build.gradle.kts decodes and wires into the signing config.
+      - name: Build release APK (signed)
+        env:
+          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: bash ./gradlew --no-daemon assembleRelease
 
-      # Rename so the asset reads "Dincharya-v0.1.1.apk" instead of
-      # "app-release.apk" on the Releases page.
+      # Rename so the asset reads "Dincharya-v0.2.0.apk" instead of
+        # "app-release.apk" on the Releases page.
       - name: Rename APK for the release
-        run: cp app/build/outputs/apk/release/app-release.apk "Dincharya-${{ github.event.release.tag_name }}.apk"
+        run: cp app/build/outputs/apk/release/app-release.apk "Dincharya-${ github.event.release.tag_name }}.apk"
 
       - name: Attach APK to the release
         uses: softprops/action-gh-release@v2
