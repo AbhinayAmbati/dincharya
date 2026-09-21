@@ -45,4 +45,10 @@ data class TaskEntity(
 
     /** How many times the task was moved to another day/time by the user. */
     val postponeCount: Int = 0,
+
+    /** Optional free-form note shown on the Focus screen. */
+    val note: String? = null,
+
+    /** [RepeatRule] name — recurring tasks spawn their next occurrence on completion. */
+    val repeatRule: String = RepeatRule.NONE.name,
 )

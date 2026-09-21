@@ -155,9 +155,39 @@ object AdaptationEngine {
     }
 
     /**
+     * Rule 3: "anytime" tasks (no scheduled time) are offered a slot at the
+     * user's historically best completion hour — the next occurrence of
+     * that hour, today if it is still ahead, tomorrow otherwise.
+     *
+     * @return null when the task has a time already or the history is too
+     *         thin to trust any hour.
+     */
+    fun suggestScheduleForAnytime(task: TaskEntity, events: List<TaskEventEntity>): Adaptation? {
+        if (task.scheduledAt != null) return null
+        val best = bestHour(events) ?: return null
+
+        val target = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, best)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+        return Adaptation(
+            taskId = task.id,
+            newScheduledAt = target.timeInMillis,
+            reason = "You finish things around %02d:00 more often than any other hour — " +
+                "want a reminder then?".format(best),
+        )
+    }
+
+    /**
      * Combined evaluation used by the Today screen: Rule 1 first (cheap and
-     * specific), Rule 2 as a fallback.
+     * specific), Rule 2 as a fallback, Rule 3 for anything still unscheduled.
      */
     fun evaluate(task: TaskEntity, events: List<TaskEventEntity>): Adaptation? =
         suggestShiftEarlier(task) ?: suggestBetterWindow(task, events)
+            ?: suggestScheduleForAnytime(task, events)
 }

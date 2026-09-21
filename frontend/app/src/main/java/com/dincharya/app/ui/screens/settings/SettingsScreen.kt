@@ -20,11 +20,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Replay
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -33,11 +35,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,9 +51,10 @@ import com.dincharya.app.app.SettingsStore
 import com.dincharya.app.ui.components.RuleCard
 import com.dincharya.app.ui.components.SectionHeader
 import com.dincharya.app.ui.navigation.Screen
+import kotlinx.coroutines.launch
 
 /** App version shown in About — keep in sync with app/build.gradle.kts. */
-private const val APP_VERSION = "0.1.0"
+private const val APP_VERSION = "0.2.0"
 
 /**
  * Settings screen: appearance, reminders, and the privacy promise.
@@ -67,6 +72,9 @@ fun SettingsScreen(navController: NavController) {
     // Local mirrors so the switches feel instant while persisting.
     var themeMode by remember { mutableStateOf(viewModel.themeMode) }
     var notifications by remember { mutableStateOf(viewModel.notificationsEnabled) }
+
+    val exportScope = rememberCoroutineScope()
+    val exportContext = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -141,6 +149,34 @@ fun SettingsScreen(navController: NavController) {
         )
         Spacer(Modifier.height(24.dp))
 
+        // ---- Data ----
+        SectionHeader(stringResource(R.string.settings_data_section))
+        Spacer(Modifier.height(12.dp))
+        SettingsLink(
+            icon = Icons.Outlined.Download,
+            label = stringResource(R.string.settings_export),
+        ) {
+            // Export every task + event to a JSON file and hand it to the
+            // system share sheet — the user decides where it lands.
+            exportScope.launch {
+                val file = viewModel.exportData()
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    exportContext,
+                    exportContext.packageName + ".fileprovider",
+                    file,
+                )
+                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                exportContext.startActivity(
+                    android.content.Intent.createChooser(send, file.name)
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+
         // ---- About ----
         SectionHeader(stringResource(R.string.settings_about))
         Spacer(Modifier.height(12.dp))
@@ -163,6 +199,10 @@ fun SettingsScreen(navController: NavController) {
             )
         }
         Spacer(Modifier.height(12.dp))
+        SettingsLink(
+            icon = Icons.Outlined.SystemUpdate,
+            label = stringResource(R.string.settings_check_updates),
+        ) { navController.navigate(Screen.Updates.route) }
         SettingsLink(
             icon = Icons.Outlined.PrivacyTip,
             label = stringResource(R.string.privacy_title),

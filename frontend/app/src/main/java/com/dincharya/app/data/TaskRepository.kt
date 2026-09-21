@@ -1,7 +1,10 @@
 package com.dincharya.app.data
 
+import android.content.Context
 import com.dincharya.app.learning.EventLogger
+import com.dincharya.app.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.Flow
+import java.util.Calendar
 
 /**
  * The app's single source of truth for task data and the place where every
@@ -13,11 +16,27 @@ import kotlinx.coroutines.flow.Flow
 class TaskRepository(
     private val taskDao: TaskDao,
     private val eventDao: TaskEventDao,
+    private val subtaskDao: SubtaskDao,
 ) {
     private val eventLogger = EventLogger(eventDao)
 
+    /**
+     * Application context, injected once from Graph — needed to book the
+     * reminder for recurring tasks this repository spawns itself. Kept
+     * nullable so the class stays constructible in unit tests.
+     */
+    @Volatile
+    private var appContext: Context? = null
+
+    fun attachContext(context: Context) {
+        appContext = context
+    }
+
     /** All pending tasks, live-updating. */
     val pendingTasks: Flow<List<TaskEntity>> = taskDao.observePending()
+
+    /** All pending tasks, one snapshot (used by the morning brief worker). */
+    suspend fun pendingTasksOnce(): List<TaskEntity> = taskDao.pendingOnce()
 
     /** Tasks completed within [from, to), live-updating (day boundaries). */
     fun completedBetween(from: Long, to: Long): Flow<List<TaskEntity>> =
@@ -37,6 +56,23 @@ class TaskRepository(
     }
 
     /**
+     * Add subtasks under a freshly created task.
+     * Blank lines are filtered by the caller.
+     */
+    suspend fun addSubtasks(taskId: Long, titles: List<String>) {
+        if (titles.isEmpty()) return
+        subtaskDao.insertAll(titles.map { SubtaskEntity(taskId = taskId, title = it) })
+    }
+
+    /** Subtasks of one task, in creation order. */
+    suspend fun subtasksFor(taskId: Long): List<SubtaskEntity> = subtaskDao.forTask(taskId)
+
+    /** Toggle a subtask's done flag. */
+    suspend fun toggleSubtask(subtask: SubtaskEntity) {
+        subtaskDao.update(subtask.copy(isDone = !subtask.isDone))
+    }
+
+    /**
      * Mark a task complete and log the COMPLETED event — the reward signal
      * the learning layer trains on.
      *
@@ -44,12 +80,66 @@ class TaskRepository(
      * circle and the Focus screen can all fire for the same task, and a
      * repeated completion must never be logged twice — duplicates would
      * pollute the learning signal and repeat rows in the evening review.
+     *
+     * Recurring tasks immediately spawn their next occurrence (with its
+     * reminder booked), so habits never leave the pending list.
      */
     suspend fun completeTask(task: TaskEntity) {
         if (task.isCompleted) return
         val now = System.currentTimeMillis()
         taskDao.update(task.copy(isCompleted = true, completedAt = now))
         eventLogger.log(task, EventOutcome.COMPLETED)
+
+        val rule = runCatching { RepeatRule.valueOf(task.repeatRule) }.getOrDefault(RepeatRule.NONE)
+        if (rule.spawnsNext) {
+            nextOccurrence(task, rule)?.let { next ->
+                val id = taskDao.insert(next)
+                eventLogger.log(next.copy(id = id), EventOutcome.CREATED)
+                next.scheduledAt?.let { at ->
+                    appContext?.let { ctx -> ReminderScheduler.schedule(ctx, id, at) }
+                }
+            }
+        }
+    }
+
+    /**
+     * The next occurrence of a recurring task: same time-of-day, one period
+     * later (skipping weekends for WEEKDAYS). Anytime recurring tasks come
+     * back as null — there is no slot to roll forward, so the habit simply
+     * stays on the list as the same pending task until completed… which it
+     * already was; in that case the caller re-creates a plain pending copy.
+     */
+    private fun nextOccurrence(task: TaskEntity, rule: RepeatRule): TaskEntity? {
+        val scheduled = task.scheduledAt ?: return null
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = scheduled
+            when (rule) {
+                RepeatRule.DAILY -> add(Calendar.DAY_OF_YEAR, 1)
+                RepeatRule.WEEKLY -> add(Calendar.DAY_OF_YEAR, 7)
+                RepeatRule.WEEKDAYS -> {
+                    do {
+                        add(Calendar.DAY_OF_YEAR, 1)
+                    } while (get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||
+                        get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)
+                }
+                RepeatRule.NONE -> return null
+            }
+            // Never book a recurrence in the past (e.g. completing a very
+            // overdue task rolls it to the same time tomorrow — which is
+            // what the user meant anyway).
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+        return task.copy(
+            id = 0L,
+            isCompleted = false,
+            completedAt = null,
+            createdAt = System.currentTimeMillis(),
+            snoozeCount = 0,
+            postponeCount = 0,
+            scheduledAt = cal.timeInMillis,
+        )
     }
 
     /**

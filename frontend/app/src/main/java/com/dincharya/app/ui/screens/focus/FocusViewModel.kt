@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dincharya.app.app.Graph
+import com.dincharya.app.data.SubtaskEntity
 import com.dincharya.app.data.TaskEntity
 import com.dincharya.app.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,6 +51,13 @@ class FocusViewModel(app: Application) : AndroidViewModel(app) {
     var finished by mutableStateOf(false)
         private set
 
+    /** Session-length presets (Pomodoro and friends) offered after picking a task. */
+    val durationPresets = listOf(15, 25, 45, 50, 90)
+
+    /** Subtasks of the selected task, checked off during the session. */
+    var subtasks by mutableStateOf(emptyList<SubtaskEntity>())
+        private set
+
     /** Start a focus session on [task]. */
     fun select(task: TaskEntity) {
         selectedTask = task
@@ -57,6 +65,29 @@ class FocusViewModel(app: Application) : AndroidViewModel(app) {
         remainingSeconds = totalSeconds
         running = false
         finished = false
+        loadSubtasks(task.id)
+    }
+
+    private fun loadSubtasks(taskId: Long) {
+        viewModelScope.launch {
+            subtasks = Graph.repository.subtasksFor(taskId)
+        }
+    }
+
+    /** Override the session length (a Pomodoro preset or the task estimate). */
+    fun setDuration(minutes: Int) {
+        totalSeconds = minutes * 60
+        remainingSeconds = totalSeconds
+        running = false
+        finished = false
+    }
+
+    /** Toggle one subtask's done flag. */
+    fun toggleSubtask(subtask: SubtaskEntity) {
+        viewModelScope.launch {
+            Graph.repository.toggleSubtask(subtask)
+            subtasks = Graph.repository.subtasksFor(subtask.taskId)
+        }
     }
 
     fun deselect() {

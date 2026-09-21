@@ -32,4 +32,7 @@ sealed class Screen(val route: String) {
 
     /** Terms of use (opened from Settings). */
     object Terms : Screen("terms")
+
+    /** Update checker — current vs. latest GitHub release (opened from Settings). */
+    object Updates : Screen("updates")
 }

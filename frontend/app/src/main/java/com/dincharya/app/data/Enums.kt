@@ -26,6 +26,29 @@ enum class TaskPriority(val weight: Int, val label: String) {
 }
 
 /**
+ * How a task repeats. A recurring task that gets completed immediately
+ * spawns its next occurrence (with a fresh reminder), so a habit is a
+ * single row of work for the user and an endless stream of learning
+ * signal for the engine.
+ */
+enum class RepeatRule(val label: String) {
+    /** One-off task — the default. */
+    NONE("Once"),
+
+    /** Every day at the same time. */
+    DAILY("Daily"),
+
+    /** Monday–Friday at the same time. */
+    WEEKDAYS("Weekdays"),
+
+    /** Same time every week. */
+    WEEKLY("Weekly");
+
+    /** True when completing a task under this rule spawns the next one. */
+    val spawnsNext: Boolean get() = this != NONE
+}
+
+/**
  * What actually happened to a task at a given moment. These labels are the
  * training data of the app: the adaptation engine learns to predict them.
  */

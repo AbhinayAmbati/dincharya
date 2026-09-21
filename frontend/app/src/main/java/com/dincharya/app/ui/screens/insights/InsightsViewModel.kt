@@ -39,6 +39,29 @@ data class InsightsUiState(
 
     /** Rate for evening window (18-24) — null when no data yet. */
     val eveningRate: Float? = null,
+
+    /** Consecutive days (ending today or yesterday) with at least one completion. */
+    val streakDays: Int = 0,
+
+    /** One heatmap cell per day, oldest first — last [HEATMAP_DAYS] days. */
+    val heatmap: List<HeatCell> = emptyList(),
+
+    /** Completions in the last 7 days. */
+    val weeklyCompleted: Int = 0,
+
+    /** Snoozes in the last 7 days. */
+    val weeklySnoozed: Int = 0,
+
+    /** Tasks pending right now. */
+    val pendingNow: Int = 0,
+)
+
+/** One day of the completion heatmap. */
+data class HeatCell(
+    /** Midnight (epoch millis) of the day. */
+    val dayStart: Long,
+    /** Completions that day. */
+    val count: Int,
 )
 
 /** Completion rate inside one labelled window of the day. */
@@ -58,6 +81,9 @@ data class CategoryStat(val category: String, val completed: Int, val total: Int
  */
 class InsightsViewModel(app: Application) : AndroidViewModel(app) {
 
+    /** Days shown in the heatmap — 13 weeks, Monday-first. */
+    val heatmapDays: Int = 91
+
     private val _uiState = MutableStateFlow(InsightsUiState())
     val uiState: StateFlow<InsightsUiState> = _uiState
 
@@ -69,12 +95,13 @@ class InsightsViewModel(app: Application) : AndroidViewModel(app) {
     fun refresh() {
         viewModelScope.launch {
             val events = Graph.repository.allEvents()
-            _uiState.value = computeStats(events)
+            val pending = Graph.repository.pendingTasksOnce()
+            _uiState.value = computeStats(events, pending.size)
         }
     }
 
-    private fun computeStats(events: List<TaskEventEntity>): InsightsUiState {
-        if (events.isEmpty()) return InsightsUiState()
+    private fun computeStats(events: List<TaskEventEntity>, pendingNow: Int): InsightsUiState {
+        if (events.isEmpty()) return InsightsUiState(pendingNow = pendingNow)
 
         val byHour = AdaptationEngine.completionRateByHour(events)
         val bestHour = AdaptationEngine.bestHour(events)
@@ -117,6 +144,16 @@ class InsightsViewModel(app: Application) : AndroidViewModel(app) {
         val morning = samples.filter { it.hourOfDay in 6..11 }
         val evening = samples.filter { it.hourOfDay in 18..23 }
 
+        // ---- Streak + heatmap + weekly, all from completion days ----
+        val completionDays = events
+            .filter { it.outcome == EventOutcome.COMPLETED.name }
+            .map { dayStartOf(it.occurredAt) }
+            .toSortedSet()
+
+        val streak = currentStreak(completionDays)
+        val heatmap = heatmapCells(completionDays, heatmapDays)
+        val weekAgo = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
+
         return InsightsUiState(
             totalEvents = events.size,
             completionRate = if (samples.isEmpty()) 0f else completedCount.toFloat() / samples.size,
@@ -128,6 +165,53 @@ class InsightsViewModel(app: Application) : AndroidViewModel(app) {
                 ?.let { it.count { e -> e.outcome == EventOutcome.COMPLETED.name }.toFloat() / it.size },
             eveningRate = evening.takeIf { it.isNotEmpty() }
                 ?.let { it.count { e -> e.outcome == EventOutcome.COMPLETED.name }.toFloat() / it.size },
+            streakDays = streak,
+            heatmap = heatmap,
+            weeklyCompleted = events.count {
+                it.outcome == EventOutcome.COMPLETED.name && it.occurredAt >= weekAgo
+            },
+            weeklySnoozed = events.count {
+                it.outcome == EventOutcome.SNOOZED.name && it.occurredAt >= weekAgo
+            },
+            pendingNow = pendingNow,
         )
+    }
+
+    /** Midnight of [at], in the device timezone. */
+    private fun dayStartOf(at: Long): Long =
+        java.util.Calendar.getInstance().apply {
+            timeInMillis = at
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+    /**
+     * Consecutive days with at least one completion, counting back from
+     * today (or yesterday — a streak survives until the day is over).
+     */
+    private fun currentStreak(completionDays: SortedSet<Long>): Int {
+        if (completionDays.isEmpty()) return 0
+        var day = dayStartOf(System.currentTimeMillis())
+        // Today not done yet (or the day just started) — the streak counts
+        // from yesterday as long as yesterday was a completion day.
+        if (day !in completionDays) day -= 24L * 60 * 60 * 1000
+        var streak = 0
+        while (day in completionDays) {
+            streak += 1
+            day -= 24L * 60 * 60 * 1000
+        }
+        return streak
+    }
+
+    /** One cell per day for the last [days] days, oldest first. */
+    private fun heatmapCells(completionDays: SortedSet<Long>, days: Int): List<HeatCell> {
+        val today = dayStartOf(System.currentTimeMillis())
+        val firstDay = today - (days - 1) * 24L * 60 * 60 * 1000
+        return (0 until days).map { offset ->
+            val day = firstDay + offset * 24L * 60 * 60 * 1000
+            HeatCell(dayStart = day, count = completionDays.count { it == day })
+        }
     }
 }

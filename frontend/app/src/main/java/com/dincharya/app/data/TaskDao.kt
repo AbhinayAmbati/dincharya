@@ -36,6 +36,10 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isCompleted = 0 ORDER BY scheduledAt IS NULL, scheduledAt ASC")
     fun observePending(): Flow<List<TaskEntity>>
 
+    /** One-shot snapshot of [observePending] for non-UI callers (the widget, the briefs). */
+    @Query("SELECT * FROM tasks WHERE isCompleted = 0 ORDER BY scheduledAt IS NULL, scheduledAt ASC")
+    suspend fun pendingOnce(): List<TaskEntity>
+
     /** Tasks completed within [from, to] — used for "done today" and the evening review. */
     @Query(
         "SELECT * FROM tasks WHERE isCompleted = 1 AND completedAt >= :from AND completedAt < :to " +

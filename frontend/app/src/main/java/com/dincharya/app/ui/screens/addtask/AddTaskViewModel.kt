@@ -2,11 +2,13 @@ package com.dincharya.app.ui.screens.addtask
 
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dincharya.app.app.Graph
+import com.dincharya.app.data.RepeatRule
 import com.dincharya.app.data.TaskCategory
 import com.dincharya.app.data.TaskEntity
 import com.dincharya.app.data.TaskPriority
@@ -28,6 +30,15 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
     var priority by mutableStateOf(TaskPriority.MEDIUM)
     var durationMinutes by mutableStateOf(30)
 
+    /** Optional free-form note shown on the Focus screen. */
+    var note by mutableStateOf("")
+
+    /** How the task repeats (once by default). */
+    var repeatRule by mutableStateOf(RepeatRule.NONE)
+
+    /** Subtask titles the user typed; blank lines are dropped on save. */
+    val subtaskTitles = mutableStateListOf("")
+
     /** Null = anytime task (kept on the list, no reminder booked). */
     var useTime by mutableStateOf(true)
     var hour by mutableStateOf(9)
@@ -35,6 +46,13 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Duration presets shown as chips on the screen. */
     val durationOptions = listOf(15, 30, 45, 60, 90, 120)
+
+    init {
+        // A title shared from another app ("share to Dincharya") seeds the form.
+        app.getSharedTaskTitle()?.let {
+            title = it
+        }
+    }
 
     /**
      * True while a save is in flight. Guards the save button against
@@ -63,10 +81,18 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
     /** True when the form is complete enough to save. */
     val canSave: Boolean get() = title.isNotBlank()
 
+    /** Adds one more (empty) subtask input row. */
+    fun addSubtaskRow() {
+        subtaskTitles.add("")
+    }
+
+    /** Edits the subtask at [index]; removing a row's text makes it vanish on save. */
+    fun setSubtask(index: Int, value: String) {
+        subtaskTitles[index] = value
+    }
+
     /**
-     * Persist the task, log CREATED, and book the reminder.
-     *
-     * @return true if the task was created.
+     * Persist the task, log CREATED, save its subtasks, and book the reminder.
      */
     fun save(onSaved: () -> Unit) {
         if (!canSave || saving) return
@@ -80,7 +106,13 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
                     priority = priority.name,
                     estimatedMinutes = durationMinutes,
                     scheduledAt = scheduledAt,
+                    note = note.trim().ifBlank { null },
+                    repeatRule = repeatRule.name,
                 )
+            )
+            Graph.repository.addSubtasks(
+                id,
+                subtaskTitles.map { it.trim() }.filter { it.isNotEmpty() },
             )
             scheduledAt?.let {
                 ReminderScheduler.schedule(getApplication(), id, it)
@@ -89,3 +121,7 @@ class AddTaskViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 }
+
+/** One-shot inbox for text shared into the app from elsewhere. */
+private fun android.app.Application.getSharedTaskTitle(): String? =
+    com.dincharya.app.app.SharedInbox.consumePendingTitle()

@@ -37,9 +37,15 @@ object Graph {
                 appContext,
                 DincharyaDatabase::class.java,
                 "dincharya.db",
-            ).build()
+            )
+                .addMigrations(DincharyaDatabase.MIGRATION_1_2)
+                .build()
             settings = SettingsStore(appContext)
-            repository = TaskRepository(database.taskDao(), database.taskEventDao())
+            repository = TaskRepository(database.taskDao(), database.taskEventDao(), database.subtaskDao())
+            // The repository needs a context to book reminders for tasks it
+            // spawns itself (recurring next occurrences); keep the context
+            // injection explicit so the class stays unit-testable.
+            repository.attachContext(appContext)
             initialized = true
         }
     }

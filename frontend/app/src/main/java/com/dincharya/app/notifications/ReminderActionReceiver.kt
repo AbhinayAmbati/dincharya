@@ -11,8 +11,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * Handles the "Done" and "Snooze 10 min" buttons on a reminder notification —
- * so the user can act without opening the app.
+ * Handles the "Done", "Snooze 10 min" and "Snooze 1 hour" buttons on a
+ * reminder notification — so the user can act without opening the app.
  *
  * The notification is dismissed synchronously in [onReceive], BEFORE any
  * database work starts: the visual response to the tap must never depend on
@@ -57,7 +57,10 @@ class ReminderActionReceiver : BroadcastReceiver() {
                             ReminderScheduler.cancel(context, taskId)
                         }
                         ACTION_SNOOZE -> {
-                            val newTime = repository.snoozeTask(task, SNOOZE_MINUTES)
+                            val minutes = intent.getIntExtra(
+                                KEY_SNOOZE_MINUTES, Notifications.SNOOZE_SHORT_MINUTES
+                            )
+                            val newTime = repository.snoozeTask(task, minutes)
                             // Book the follow-up reminder for the snoozed time.
                             ReminderScheduler.schedule(context, taskId, newTime)
                         }
@@ -73,6 +76,7 @@ class ReminderActionReceiver : BroadcastReceiver() {
         const val ACTION_COMPLETE = "com.dincharya.app.action.COMPLETE"
         const val ACTION_SNOOZE = "com.dincharya.app.action.SNOOZE"
         const val KEY_TASK_ID = "taskId"
+        const val KEY_SNOOZE_MINUTES = "snoozeMinutes"
         const val SNOOZE_MINUTES = 10
 
         /** Helper so callers build intents with matching extras. */
@@ -80,6 +84,12 @@ class ReminderActionReceiver : BroadcastReceiver() {
             Intent(context, ReminderActionReceiver::class.java).apply {
                 this.action = action
                 putExtra(KEY_TASK_ID, taskId)
+            }
+
+        /** A snooze intent that carries its duration (10 or 60 minutes). */
+        fun snoozeIntentFor(context: Context, taskId: Long, minutes: Int): Intent =
+            intentFor(context, taskId, ACTION_SNOOZE).apply {
+                putExtra(KEY_SNOOZE_MINUTES, minutes)
             }
     }
 }

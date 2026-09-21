@@ -1,5 +1,8 @@
 package com.dincharya.app.ui.screens.focus
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,13 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -96,6 +106,19 @@ fun FocusScreen(navController: NavController) {
 
     // ---- Active session ----
 
+    // Keep the screen awake while a session is running — the one place in
+    // the app where the user has explicitly asked to stare at one screen.
+    val context = LocalContext.current
+    DisposableEffect(selected?.id, viewModel.running) {
+        val window = (context as? android.app.Activity)?.window
+        if (viewModel.running) {
+            window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
     // Drive the countdown: one VM tick per second while the timer runs.
     LaunchedEffect(viewModel.running) {
         while (isActive && viewModel.running) {
@@ -112,13 +135,81 @@ fun FocusScreen(navController: NavController) {
     else 1f - remaining.toFloat() / viewModel.totalSeconds
 
     Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.verticalScroll(rememberScrollState()),
+        ) {
             Text(
                 selected.title,
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(24.dp))
+
+            // Optional note the user attached when creating the task.
+            selected.note?.let { note ->
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    note,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            Spacer(Modifier.height(18.dp))
+
+            // Session-length presets — Pomodoro and friends.
+            Row {
+                viewModel.durationPresets.forEach { minutes ->
+                    FilterChip(
+                        selected = viewModel.totalSeconds == minutes * 60,
+                        onClick = { viewModel.setDuration(minutes) },
+                        label = { Text("$minutes") },
+                        modifier = Modifier.padding(end = 6.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+
+            // Checklist — subtasks ticked off during the session.
+            viewModel.subtasks.forEach { subtask ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable { viewModel.toggleSubtask(subtask) },
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                            .then(
+                                if (subtask.isDone) {
+                                    Modifier.background(MaterialTheme.colorScheme.onSurface, CircleShape)
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                    ) {
+                        if (subtask.isDone) {
+                            Text(
+                                "✓",
+                                color = MaterialTheme.colorScheme.surface,
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.size(10.dp))
+                    Text(
+                        subtask.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (subtask.isDone) MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+            Spacer(Modifier.height(18.dp))
             // The clock — the only thing that needs to be big.
             Text(
                 text = "%02d:%02d".format(remaining / 60, remaining % 60),

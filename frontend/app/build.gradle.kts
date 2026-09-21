@@ -24,8 +24,8 @@ android {
         applicationId = "com.dincharya.app"
         minSdk = 26          // Adaptive icons without legacy PNGs; java.time available
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -36,11 +36,31 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Signed with the debug key so the release APK is directly
-            // installable from CI artifacts and GitHub Releases.
-            // A proper keystore replaces this in v0.2; until then an update
-            // from a different CI machine may need an uninstall first.
-            signingConfig = signingConfigs.getByName("debug")
+            // Release signing key, provided by CI as environment variables
+            // (decoded from GitHub Actions secrets). Locally — where no key
+            // is around — we fall back to the debug key so the build still
+            // produces an installable APK; it just can't upgrade over a
+            // properly signed release install.
+            val keystoreBase64 = System.getenv("SIGNING_KEYSTORE_BASE64")
+            signingConfig = if (!keystoreBase64.isNullOrBlank()) {
+                val keystoreFile = File(
+                    layout.buildDirectory.asFile.get(),
+                    "release-signing/dincharya-release.p12",
+                )
+                keystoreFile.parentFile.mkdirs()
+                keystoreFile.writeBytes(
+                    java.util.Base64.getDecoder().decode(keystoreBase64)
+                )
+                signingConfigs.create("releaseUpload") {
+                    storeFile = keystoreFile
+                    storeType = "PKCS12"
+                    storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                    keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                    keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+                }
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -80,6 +81,36 @@ fun InsightsScreen(navController: NavController) {
             label = stringResource(R.string.insights_snoozed),
             value = state.snoozeCount.toString(),
         )
+        StatRow(
+            label = stringResource(R.string.insights_streak),
+            value = stringResource(R.string.insights_streak_days, state.streakDays),
+        )
+
+        // ---- Weekly report ----
+        SectionHeader(stringResource(R.string.insights_weekly), Modifier.padding(top = 20.dp))
+        Spacer(Modifier.height(8.dp))
+        RuleCard {
+            Text(
+                stringResource(
+                    R.string.insights_weekly_line,
+                    state.weeklyCompleted,
+                    state.weeklySnoozed,
+                    state.pendingNow,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+
+        // ---- Consistency heatmap ----
+        SectionHeader(stringResource(R.string.insights_heatmap), Modifier.padding(top = 20.dp))
+        Spacer(Modifier.height(8.dp))
+        CompletionHeatmap(cells = state.heatmap)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            stringResource(R.string.insights_heatmap_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
         // ---- The honest mirror line ----
         if (state.morningRate != null && state.eveningRate != null) {
@@ -115,6 +146,49 @@ fun InsightsScreen(navController: NavController) {
             }
         }
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+/**
+ * GitHub-style consistency grid: one small square per day, arranged in
+ * week columns (oldest on the left, today on the right). Intensity is
+ * monochrome ALPHA, never colour — the accessibility rule again.
+ */
+@Composable
+private fun CompletionHeatmap(cells: List<com.dincharya.app.ui.screens.insights.HeatCell>) {
+    if (cells.isEmpty()) return
+    val max = cells.maxOf { it.count }.coerceAtLeast(1)
+    // Pad the oldest week so the grid always starts on a Monday.
+    val firstDow = java.util.Calendar.getInstance().apply {
+        timeInMillis = cells.first().dayStart
+    }.get(java.util.Calendar.DAY_OF_WEEK)
+    val leading = (firstDow + 5) % 7 // Calendar.MONDAY == 2
+    val padded = List(leading) { null } + cells
+
+    androidx.compose.foundation.lazy.grid.LazyHorizontalGrid(
+        rows = androidx.compose.foundation.lazy.grid.GridCells.Fixed(7),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
+        userScrollEnabled = false,
+    ) {
+        items(padded.size) { index ->
+            val cell = padded[index]
+            val alpha = when {
+                cell == null -> 0f
+                cell.count == 0 -> 0.12f
+                else -> 0.3f + 0.7f * (cell.count.toFloat() / max)
+            }
+            Box(
+                Modifier
+                    .size(12.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
+                    )
+            )
+        }
     }
 }
 

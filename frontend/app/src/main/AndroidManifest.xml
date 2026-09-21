@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Dincharya — Android manifest.
-  v1 is fully local: no INTERNET permission is declared on purpose, so the app
-  physically cannot send data anywhere. When the Express backend arrives in a
-  later phase, add the permission and document WHY in this comment.
+  v1 was fully local with no INTERNET permission. As of v0.2 the app has
+  exactly ONE online feature: the update check in Settings, which asks
+  GitHub for the latest published release and opens download links in the
+  browser. No user data is ever transmitted — the connection is read-only,
+  unauthenticated, and fires only when the user taps "Check for updates".
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Needed on Android 13+ to show reminder notifications. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Update check only (see the comment at the top of this file). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".DincharyaApplication"
@@ -21,9 +26,22 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Long-press the launcher icon → "Add task". -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+
+            <!-- Share text from any app straight into Add Task. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 
@@ -31,5 +49,34 @@
         <receiver
             android:name=".notifications.ReminderActionReceiver"
             android:exported="false" />
+
+        <!-- Home-screen "Today" widget. -->
+        <receiver
+            android:name=".ui.widget.TodayWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+
+        <!-- Complete-from-widget taps. -->
+        <receiver
+            android:name=".ui.widget.WidgetActionReceiver"
+            android:exported="false" />
+
+        <!-- Serves the local data export file to the share sheet. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

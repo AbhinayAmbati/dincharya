@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.dincharya.app.MainActivity
@@ -15,13 +14,18 @@ import com.dincharya.app.data.TaskEntity
 /**
  * Builds and shows reminder notifications.
  *
- * The notification carries two direct actions — Complete and Snooze — so
- * the user never has to open the app to act on a reminder. All taps are
- * routed to [ReminderActionReceiver].
+ * The reminder carries three direct actions — Done, Snooze 10 min and
+ * Snooze 1 hour — so the user never has to open the app to act on one.
+ * All taps are routed to [ReminderActionReceiver]; the snooze duration
+ * travels as an intent extra so one receiver serves both buttons.
  */
 object Notifications {
 
     const val CHANNEL_ID = "dincharya_reminders"
+
+    /** Fixed notification ids for the daily briefs (task ids start at 1). */
+    const val MORNING_BRIEF_ID = 100_001
+    const val EVENING_BRIEF_ID = 100_002
 
     /** Create the notification channel (required on API 26+, which is our minSdk). */
     fun ensureChannel(context: Context) {
@@ -40,7 +44,7 @@ object Notifications {
      * Show the reminder notification for [task].
      *
      * Request codes are derived from the task id so different tasks (and the
-     * two actions of the same task) never collide in PendingIntent lookup.
+     * three actions of the same task) never collide in PendingIntent lookup.
      */
     fun showReminder(context: Context, task: TaskEntity) {
         ensureChannel(context)
@@ -56,25 +60,33 @@ object Notifications {
 
         // "Done" button -> broadcast to mark the task complete.
         val completePi = PendingIntent.getBroadcast(
-            context, (task.id * 2).toInt(),
+            context, (task.id * 3).toInt(),
             ReminderActionReceiver.intentFor(context, task.id, ReminderActionReceiver.ACTION_COMPLETE),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        // "Snooze 10 min" button -> broadcast to push the reminder later.
-        val snoozePi = PendingIntent.getBroadcast(
-            context, (task.id * 2 + 1).toInt(),
-            ReminderActionReceiver.intentFor(context, task.id, ReminderActionReceiver.ACTION_SNOOZE),
+        // "10 min" snooze button.
+        val snooze10Pi = PendingIntent.getBroadcast(
+            context, (task.id * 3 + 1).toInt(),
+            ReminderActionReceiver.snoozeIntentFor(context, task.id, SNOOZE_SHORT_MINUTES),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        // "1 hour" snooze button.
+        val snooze60Pi = PendingIntent.getBroadcast(
+            context, (task.id * 3 + 2).toInt(),
+            ReminderActionReceiver.snoozeIntentFor(context, task.id, SNOOZE_LONG_MINUTES),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(task.title)
-            .setContentText(context.getString(R.string.notif_channel_description))
+            .setContentText(context.getString(R.string.notif_reminder_text))
             .setContentIntent(openPi)
             .addAction(0, context.getString(R.string.notif_action_complete), completePi)
-            .addAction(0, context.getString(R.string.notif_action_snooze), snoozePi)
+            .addAction(0, context.getString(R.string.notif_action_snooze_10), snooze10Pi)
+            .addAction(0, context.getString(R.string.notif_action_snooze_60), snooze60Pi)
             .setAutoCancel(true)
             .build()
 
@@ -87,4 +99,33 @@ object Notifications {
             // visible in the Today list either way.
         }
     }
+
+    /** Show a plain, actionless text notification (used by the daily briefs). */
+    fun showBrief(context: Context, id: Int, title: String, text: String) {
+        ensureChannel(context)
+        val openIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val openPi = PendingIntent.getActivity(
+            context, id, openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(openPi)
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(context).notify(id, notification)
+        } catch (_: SecurityException) {
+            // POST_NOTIFICATIONS denied — nothing more we can do.
+        }
+    }
+
+    /** Snooze durations offered directly on the notification. */
+    const val SNOOZE_SHORT_MINUTES = 10
+    const val SNOOZE_LONG_MINUTES = 60
 }

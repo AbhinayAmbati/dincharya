@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.dincharya.app.R
+import com.dincharya.app.data.RepeatRule
 import com.dincharya.app.data.TaskCategory
 import com.dincharya.app.data.TaskPriority
 import com.dincharya.app.ui.components.SectionHeader
@@ -98,6 +100,46 @@ fun AddTaskScreen(navController: NavController) {
         ) { index -> viewModel.durationMinutes = viewModel.durationOptions[index] }
         Spacer(Modifier.height(24.dp))
 
+        // ---- Repeat ----
+        SectionHeader(stringResource(R.string.add_repeat_label))
+        Spacer(Modifier.height(8.dp))
+        ChipRow(
+            options = RepeatRule.entries.map { it.label },
+            selectedIndex = RepeatRule.entries.indexOf(viewModel.repeatRule),
+        ) { index -> viewModel.repeatRule = RepeatRule.entries[index] }
+        Spacer(Modifier.height(24.dp))
+
+        // ---- Subtasks ----
+        SectionHeader(stringResource(R.string.add_subtasks_label))
+        Spacer(Modifier.height(8.dp))
+        viewModel.subtaskTitles.forEachIndexed { index, _ ->
+            OutlinedTextField(
+                value = viewModel.subtaskTitles[index],
+                onValueChange = { viewModel.setSubtask(index, it) },
+                label = { Text(stringResource(R.string.add_subtask_placeholder, index + 1)) },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+            )
+        }
+        TextButton(onClick = { viewModel.addSubtaskRow() }) {
+            Text(stringResource(R.string.add_subtask_add))
+        }
+        Spacer(Modifier.height(24.dp))
+
+        // ---- Note ----
+        SectionHeader(stringResource(R.string.add_note_label))
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = viewModel.note,
+            onValueChange = { viewModel.note = it },
+            label = { Text(stringResource(R.string.add_note_placeholder)) },
+            minLines = 2,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(24.dp))
+
         // ---- Reminder time ----
         SectionHeader(stringResource(R.string.add_time_label))
         Spacer(Modifier.height(8.dp))
@@ -142,9 +184,7 @@ fun AddTaskScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
-        ) {
-            Text(stringResource(R.string.add_save), style = MaterialTheme.typography.titleMedium)
-        }
+        ) { Text(stringResource(R.string.add_save), style = MaterialTheme.typography.titleMedium) }
         Spacer(Modifier.height(24.dp))
     }
 }

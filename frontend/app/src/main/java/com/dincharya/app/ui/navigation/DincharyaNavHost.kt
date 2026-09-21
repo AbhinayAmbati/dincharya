@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dincharya.app.R
 import com.dincharya.app.app.Graph
+import com.dincharya.app.app.SharedInbox
 import com.dincharya.app.ui.screens.addtask.AddTaskScreen
 import com.dincharya.app.ui.screens.focus.FocusScreen
 import com.dincharya.app.ui.screens.insights.InsightsScreen
@@ -49,6 +51,7 @@ import com.dincharya.app.ui.screens.onboarding.OnboardingScreen
 import com.dincharya.app.ui.screens.review.ReviewScreen
 import com.dincharya.app.ui.screens.settings.SettingsScreen
 import com.dincharya.app.ui.screens.today.TodayScreen
+import com.dincharya.app.ui.screens.updates.UpdateScreen
 import com.dincharya.app.ui.theme.DincharyaTheme
 
 /**
@@ -63,6 +66,18 @@ fun DincharyaApp(themeMode: String) {
         val navController = rememberNavController()
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = backStackEntry?.destination?.route
+
+        // Content shared from another app (or the Add-task shortcut / widget
+        // "+") arrives through the SharedInbox — route it to Add Task once
+        // the graph is up. The title itself is left in the inbox for the
+        // Add Task screen to consume (peeking here, consuming there).
+        LaunchedEffect(Unit) {
+            val hasSharedTitle = SharedInbox.pendingTaskTitle != null
+            val wantAdd = hasSharedTitle || SharedInbox.consumeOpenAddTask()
+            if (wantAdd && Graph.settings.onboardingDone) {
+                navController.navigate(Screen.AddTask.route)
+            }
+        }
 
         // Screens that get the bottom navigation chrome.
         val chromeRoutes = setOf(
@@ -204,5 +219,6 @@ fun DincharyaNavHost(navController: NavHostController, modifier: Modifier = Modi
         composable(Screen.Settings.route) { SettingsScreen(navController) }
         composable(Screen.Privacy.route) { PrivacyScreen(navController) }
         composable(Screen.Terms.route) { TermsScreen(navController) }
+        composable(Screen.Updates.route) { UpdateScreen(navController) }
     }
 }
