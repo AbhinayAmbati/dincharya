@@ -1,6 +1,7 @@
 package com.dincharya.app.ui.screens.today
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,16 +13,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,12 +50,23 @@ import com.dincharya.app.ui.navigation.editRoute
  * task sections (overdue / today / anytime / later / done). One flat list,
  * no nesting — light and fast by design.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(navController: NavController) {
     // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
     // subclasses automatically, so no explicit factory is needed.
     val viewModel: TodayViewModel = viewModel()
     val state by viewModel.uiState.collectAsState()
+
+    // Pull down from the top to roll the day window and refresh (also covers
+    // the app staying open past midnight).
+    val pullState = rememberPullToRefreshState()
+    if (pullState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refreshDay()
+            pullState.endRefresh()
+        }
+    }
 
     // Task pending deletion — wired to a confirmation dialog below.
     var taskToDelete by remember { mutableStateOf<TaskEntity?>(null) }
@@ -62,6 +80,11 @@ fun TodayScreen(navController: NavController) {
     val doneTitle = stringResource(R.string.section_done_today)
     val deleteLabel = stringResource(R.string.task_delete)
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(pullState.nestedScrollConnection),
+    ) {
     Column(modifier = Modifier.fillMaxSize()) {
         // ---- Header ----
         Column(Modifier.padding(horizontal = 20.dp)) {
@@ -150,6 +173,13 @@ fun TodayScreen(navController: NavController) {
                 }
             }
         }
+    }
+
+        // The pull-to-refresh spinner sits above the content, centred.
+        PullToRefreshContainer(
+            state = pullState,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
     }
 
     // ---- Delete confirmation ----

@@ -9,10 +9,12 @@ import com.dincharya.app.data.TaskEventEntity
 import com.dincharya.app.learning.Adaptation
 import com.dincharya.app.learning.AdaptationEngine
 import com.dincharya.app.notifications.ReminderScheduler
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -42,13 +44,16 @@ data class TodayUiState(
  * ViewModel for the Today screen: streams the live task list, splits it into
  * sections, and surfaces adaptation suggestions from the rule engine.
  */
+@kotlinx.coroutines.ExperimentalCoroutinesApi
 class TodayViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repository = Graph.repository
 
-    /** Today's window [startOfDay, startOfTomorrow), fixed at VM creation. */
-    private val dayStart: Long
-    private val dayEnd: Long
+    /** Today's window [startOfDay, startOfTomorrow) — a state so a refresh
+     *  (pull-to-refresh, or the app sitting open past midnight) can roll it. */
+    private data class DayWindow(val start: Long, val end: Long)
+
+    private val dayWindow = MutableStateFlow(currentWindow())
 
     /** Dismissed suggestion ids so "Keep" is sticky for the session. */
     private val dismissedSuggestions = MutableStateFlow<Set<Long>>(emptySet())
@@ -59,14 +64,6 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
     val uiState: StateFlow<TodayUiState>
 
     init {
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-        }
-        dayStart = cal.timeInMillis
-        cal.add(Calendar.DAY_OF_YEAR, 1)
-        dayEnd = cal.timeInMillis
-
         // Refresh the event log whenever tasks change — most task mutations
         // also write an event, so pending-list churn is a good trigger.
         viewModelScope.launch {
@@ -75,11 +72,14 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
 
         uiState = combine(
             repository.pendingTasks,
-            repository.completedBetween(dayStart, dayEnd),
+            dayWindow,
+            dayWindow.flatMapLatest { window ->
+                repository.completedBetween(window.start, window.end)
+            },
             eventLog,
             dismissedSuggestions,
-        ) { pending, completed, events, dismissed ->
-            buildState(pending, completed, events, dismissed)
+        ) { pending, window, completed, events, dismissed ->
+            buildState(pending, completed, events, dismissed, window)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -87,13 +87,35 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
+    /** Midnight-to-midnight window for "today". */
+    private fun currentWindow(): DayWindow {
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val start = cal.timeInMillis
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+        return DayWindow(start, cal.timeInMillis)
+    }
+
+    /**
+     * Pull-to-refresh: roll the day window (covers the app staying open
+     * past midnight) — everything else is live already, so this is instant.
+     */
+    fun refreshDay() {
+        dayWindow.value = currentWindow()
+    }
+
     private fun buildState(
         pending: List<TaskEntity>,
         completed: List<TaskEntity>,
         events: List<TaskEventEntity>,
         dismissed: Set<Long>,
+        window: DayWindow,
     ): TodayUiState {
         val now = System.currentTimeMillis()
+        val dayStart = window.start
+        val dayEnd = window.end
 
         val overdue = pending.filter { it.scheduledAt != null && it.scheduledAt < dayStart }
         val upcoming = pending.filter { it.scheduledAt != null && it.scheduledAt in dayStart until dayEnd && it.scheduledAt >= now }

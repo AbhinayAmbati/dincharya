@@ -75,9 +75,10 @@ data class CategoryStat(val category: String, val completed: Int, val total: Int
 /**
  * ViewModel for the Insights screen — the "honest mirror".
  *
- * Computes all statistics from [Graph.repository]'s event log on open. This
- * is deliberately snapshot-based (not a Flow): the log only changes through
- * task interactions, and a stale-but-correct mirror is fine between visits.
+ * Computes all statistics from [Graph.repository]'s event log. Statistics
+ * are recomputed whenever a task changes (the log only changes through task
+ * interactions), so the mirror never goes stale while the app is open —
+ * and a pull-to-refresh recomputes it on demand.
  */
 class InsightsViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -89,6 +90,12 @@ class InsightsViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         refresh()
+        // Recompute whenever any task changes: completing, undoing, editing
+        // or deleting a task always touches the tasks table, which this
+        // live flow observes — no app restart needed to see fresh numbers.
+        viewModelScope.launch {
+            Graph.repository.pendingTasks.collect { refresh() }
+        }
     }
 
     /** Recompute everything from the current event log. */

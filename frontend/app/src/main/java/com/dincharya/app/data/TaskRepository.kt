@@ -171,10 +171,12 @@ class TaskRepository(
     }
 
     /**
-     * Undo a completion: the task returns to pending and the occurrence
-     * this completion spawned (if any) is removed, so a habit rolls back
-     * exactly one step. The COMPLETED event stays in the history on
-     * purpose — events are an append-only record of what happened.
+     * Undo a completion: the task returns to pending, the occurrence this
+     * completion spawned (if any) is removed, and the COMPLETED event the
+     * completion wrote is rolled back too — otherwise a complete-undo-
+     * complete cycle would count the same task twice in Insights and the
+     * evening review. (The event timestamp sits within a few milliseconds
+     * of [TaskEntity.completedAt]; the small window below matches it.)
      *
      * @return the id of the removed spawned occurrence, so the caller can
      *         cancel that reminder too (null when there was none).
@@ -184,6 +186,10 @@ class TaskRepository(
         val child = taskDao.bySpawnedBy(task.id)
         if (child != null) {
             taskDao.delete(child)
+            eventDao.deleteAllForTask(child.id)
+        }
+        task.completedAt?.let { at ->
+            eventDao.deleteCompletionBetween(task.id, at, at + 5_000)
         }
         taskDao.update(task.copy(isCompleted = false, completedAt = null))
         return child?.id

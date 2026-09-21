@@ -12,13 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,6 +42,7 @@ import java.util.Locale
  * (completion rate), the best window, per-time-of-day bars and per-category
  * stats. Bars communicate through LENGTH, not colour (accessibility rule).
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InsightsScreen(navController: NavController) {
     // Plain viewModel(): the default factory constructs AndroidViewModel(Application)
@@ -44,12 +50,26 @@ fun InsightsScreen(navController: NavController) {
     val viewModel: InsightsViewModel = viewModel()
     val state by viewModel.uiState.collectAsState()
 
-    Column(
+    // Pull down from the top to recompute the mirror on demand.
+    val pullState = rememberPullToRefreshState()
+    if (pullState.isRefreshing) {
+        LaunchedEffect(true) {
+            viewModel.refresh()
+            pullState.endRefresh()
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
+            .nestedScroll(pullState.nestedScrollConnection),
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+        ) {
         Spacer(Modifier.height(20.dp))
         Text(stringResource(R.string.insights_header), style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(4.dp))
@@ -146,6 +166,13 @@ fun InsightsScreen(navController: NavController) {
             }
         }
         Spacer(Modifier.height(32.dp))
+        }
+
+        // The pull-to-refresh spinner sits above the content, centred.
+        PullToRefreshContainer(
+            state = pullState,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
     }
 }
 
