@@ -200,7 +200,7 @@ object RhythmProfile {
                 expected = expected,
             )
         }.sortedByDescending { it.strength }
-    }""
+    }
 
     // ------------------------------------------------------------------
     // Estimate calibration
