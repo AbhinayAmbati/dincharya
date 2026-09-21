@@ -5,8 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dincharya.app.app.Graph
 import com.dincharya.app.data.EventOutcome
+import com.dincharya.app.data.TaskEntity
 import com.dincharya.app.data.TaskEventEntity
 import com.dincharya.app.learning.AdaptationEngine
+import com.dincharya.app.learning.RhythmProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -54,6 +56,21 @@ data class InsightsUiState(
 
     /** Tasks pending right now. */
     val pendingNow: Int = 0,
+
+    /** The self-image check: what the record says vs what the user claimed. Null = too little data. */
+    val selfImage: String? = null,
+
+    /** Plain-language weekly reading (strongest day, golden window, momentum). */
+    val narrative: List<String> = emptyList(),
+
+    /** Best hour per category with enough history — "Learning at 9, Chores at 20". */
+    val categoryBestHours: Map<String, Int> = emptyMap(),
+
+    /** Active recurring habits and how automatic they have become (0..1). */
+    val habits: List<RhythmProfile.HabitStat> = emptyList(),
+
+    /** Median actual/estimated duration per category (from focus sessions). */
+    val calibration: Map<String, Float> = emptyMap(),
 )
 
 /** One day of the completion heatmap. */
@@ -102,13 +119,23 @@ class InsightsViewModel(app: Application) : AndroidViewModel(app) {
     fun refresh() {
         viewModelScope.launch {
             val events = Graph.repository.allEvents()
-            val pending = Graph.repository.pendingTasksOnce()
-            _uiState.value = computeStats(events, pending.size)
+            val allTasks = Graph.repository.allTasksOnce()
+            val pendingNow = allTasks.count { !it.isCompleted }
+            _uiState.value = computeStats(events, allTasks, pendingNow)
         }
     }
 
-    private fun computeStats(events: List<TaskEventEntity>, pendingNow: Int): InsightsUiState {
-        if (events.isEmpty()) return InsightsUiState(pendingNow = pendingNow)
+    private fun computeStats(
+        events: List<TaskEventEntity>,
+        allTasks: List<TaskEntity>,
+        pendingNow: Int,
+    ): InsightsUiState {
+        if (events.isEmpty()) {
+            return InsightsUiState(
+                pendingNow = pendingNow,
+                habits = RhythmProfile.habitStrength(allTasks),
+            )
+        }
 
         val byHour = AdaptationEngine.completionRateByHour(events)
         val bestHour = AdaptationEngine.bestHour(events)
@@ -181,6 +208,16 @@ class InsightsViewModel(app: Application) : AndroidViewModel(app) {
                 it.outcome == EventOutcome.SNOOZED.name && it.occurredAt >= weekAgo
             },
             pendingNow = pendingNow,
+            selfImage = RhythmProfile.selfImage(Graph.settings.chronotype, events),
+            narrative = RhythmProfile.weeklyNarrative(
+                events,
+                thisWeek = events.count {
+                    it.outcome == EventOutcome.COMPLETED.name && it.occurredAt >= weekAgo
+                },
+            ),
+            categoryBestHours = RhythmProfile.perCategoryBestHour(events),
+            habits = RhythmProfile.habitStrength(allTasks),
+            calibration = RhythmProfile.estimateCalibration(events),
         )
     }
 

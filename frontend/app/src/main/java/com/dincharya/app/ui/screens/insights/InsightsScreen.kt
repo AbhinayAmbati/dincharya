@@ -106,6 +106,44 @@ fun InsightsScreen(navController: NavController) {
             value = stringResource(R.string.insights_streak_days, state.streakDays),
         )
 
+        // ---- Your rhythm: the personal reading ----
+        if (state.selfImage != null || state.narrative.isNotEmpty()) {
+            SectionHeader(stringResource(R.string.insights_rhythm), Modifier.padding(top = 20.dp))
+            Spacer(Modifier.height(8.dp))
+            RuleCard {
+                state.selfImage?.let { line ->
+                    Text(line, style = MaterialTheme.typography.bodyMedium)
+                    if (state.narrative.isNotEmpty()) Spacer(Modifier.height(10.dp))
+                }
+                state.narrative.forEach { line ->
+                    Text(
+                        line,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 2.dp),
+                    )
+                }
+            }
+        }
+
+        // ---- Habits: how automatic they have become ----
+        if (state.habits.isNotEmpty()) {
+            SectionHeader(stringResource(R.string.insights_habits), Modifier.padding(top = 20.dp))
+            Spacer(Modifier.height(8.dp))
+            state.habits.forEach { habit ->
+                RateBar(
+                    label = habit.title,
+                    rate = habit.strength,
+                    samples = habit.completions,
+                )
+            }
+            Text(
+                stringResource(R.string.insights_habits_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
         // ---- Weekly report ----
         SectionHeader(stringResource(R.string.insights_weekly), Modifier.padding(top = 20.dp))
         Spacer(Modifier.height(8.dp))

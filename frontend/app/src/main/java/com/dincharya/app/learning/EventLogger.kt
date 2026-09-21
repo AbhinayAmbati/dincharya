@@ -16,6 +16,32 @@ import java.util.Calendar
 class EventLogger(private val eventDao: TaskEventDao) {
 
     /**
+     * Record a completed focus session: actual minutes spent vs the task's
+     * estimate. Feeds the estimate calibration ("you take 2x longer than
+     * you think for Learning").
+     */
+    suspend fun logFocused(task: TaskEntity, estimatedMinutes: Int, actualMinutes: Int) {
+        try {
+            val now = System.currentTimeMillis()
+            val hourOfDay = Calendar.getInstance().apply { timeInMillis = now }
+                .get(Calendar.HOUR_OF_DAY)
+            eventDao.insert(
+                TaskEventEntity(
+                    taskId = task.id,
+                    outcome = EventOutcome.FOCUSED.name,
+                    scheduledAt = task.scheduledAt ?: now,
+                    occurredAt = now,
+                    category = task.category,
+                    hourOfDay = hourOfDay,
+                    detail = "$estimatedMinutes/$actualMinutes",
+                )
+            )
+        } catch (t: Throwable) {
+            Log.w(TAG, "Failed to log focus event", t)
+        }
+    }
+
+    /**
      * Record an outcome for [task].
      *
      * @param outcome what the user did (created / completed / snoozed / ...).

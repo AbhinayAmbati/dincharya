@@ -33,6 +33,10 @@ class DailyBriefWorker(
         val isMorning = inputData.getString(KEY_KIND) == KIND_MORNING
 
         if (isMorning) {
+            // New day, clean slate: missed recurring habits are rolled
+            // forward to a realistic slot today (see repository docs)
+            // before the brief is composed.
+            runCatching { Graph.repository.rollMissedRecurringTasks() }
             val tasks = Graph.repository.pendingTasksOnce()
             val today = tasks.filter { it.scheduledAt != null && it.startsToday() }
             val text = if (today.isEmpty()) {

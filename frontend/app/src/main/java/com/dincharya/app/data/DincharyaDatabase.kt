@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  */
 @Database(
     entities = [TaskEntity::class, TaskEventEntity::class, SubtaskEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class DincharyaDatabase : RoomDatabase() {
@@ -25,6 +25,16 @@ abstract class DincharyaDatabase : RoomDatabase() {
     abstract fun subtaskDao(): SubtaskDao
 
     companion object {
+        /**
+         * v3 -> v4: FOCUSED events carry "estimated/actual" minutes in a
+         * new nullable detail column (estimate calibration).
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE task_events ADD COLUMN detail TEXT")
+            }
+        }
+
         /**
          * v2 -> v3: tasks spawned by a recurring completion remember their
          * parent (undo support). Nullable, no default needed for old rows.

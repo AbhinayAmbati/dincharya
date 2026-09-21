@@ -38,6 +38,14 @@ class TaskRepository(
     /** All pending tasks, one snapshot (used by the morning brief worker). */
     suspend fun pendingTasksOnce(): List<TaskEntity> = taskDao.pendingOnce()
 
+    /** Every task, pending and completed — habits scored across their whole chain. */
+    suspend fun allTasksOnce(): List<TaskEntity> = taskDao.allOnce()
+
+    /** Record a finished focus session (estimate vs actual minutes). */
+    suspend fun logFocused(task: TaskEntity, estimatedMinutes: Int, actualMinutes: Int) {
+        eventLogger.logFocused(task, estimatedMinutes, actualMinutes)
+    }
+
     /** Tasks completed within [from, to), live-updating (day boundaries). */
     fun completedBetween(from: Long, to: Long): Flow<List<TaskEntity>> =
         taskDao.observeCompletedBetween(from, to)
@@ -253,6 +261,60 @@ class TaskRepository(
             task.copy(scheduledAt = newScheduledAt, postponeCount = task.postponeCount + 1)
         )
         eventLogger.log(task, EventOutcome.RESCHEDULED)
+    }
+
+    /**
+     * Give missed recurring habits a fresh start each morning: any pending
+     * recurring task still scheduled before today is rolled to today at
+     * its usual time (when that slot is still ahead) or to the next
+     * realistic slot — the user's best hour for that category, when the
+     * history knows one, tomorrow at the usual time otherwise. Called by
+     * the morning brief, so yesterday's miss never haunts today's list.
+     */
+    suspend fun rollMissedRecurringTasks() {
+        val now = System.currentTimeMillis()
+        val todayStart = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        taskDao.pendingOnce()
+            .filter { it.scheduledAt != null && it.scheduledAt < todayStart }
+            .filter { runCatching { RepeatRule.valueOf(it.repeatRule) }.getOrDefault(RepeatRule.NONE) != RepeatRule.NONE }
+            .forEach { task ->
+                val original = Calendar.getInstance().apply { timeInMillis = task.scheduledAt!! }
+                val hourOfDay = original.get(Calendar.HOUR_OF_DAY)
+                val minute = original.get(Calendar.MINUTE)
+
+                val today = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, hourOfDay)
+                    set(Calendar.MINUTE, minute)
+                    set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                }
+                val newAt = if (today.timeInMillis > now) {
+                    // The usual slot is still ahead today — perfect.
+                    today.timeInMillis
+                } else {
+                    // Already passed today: try the user's best hour for this
+                    // category, or fall back to tomorrow's usual slot.
+                    val events = eventDao.all()
+                    val category = events.filter { it.category == task.category }
+                    val best = com.dincharya.app.learning.RhythmProfile.bestHour(category)
+                    val target = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, best ?: hourOfDay)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                    }
+                    if (best != null && target.timeInMillis > now) target.timeInMillis
+                    else today.apply { add(Calendar.DAY_OF_YEAR, 1) }.timeInMillis
+                }
+
+                taskDao.update(task.copy(scheduledAt = newAt, snoozeCount = 0))
+                appContext?.let { ctx ->
+                    ReminderScheduler.cancel(ctx, task.id)
+                    ReminderScheduler.schedule(ctx, task.id, newAt)
+                }
+            }
     }
 
     /** Delete a task. Its event history is kept on purpose — deleted tasks still teach. */

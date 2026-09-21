@@ -37,4 +37,11 @@ data class TaskEventEntity(
 
     /** Hour of day (0-23) when the event happened — the key learning feature. */
     val hourOfDay: Int,
+
+    /**
+     * Optional structured payload. Currently used by FOCUSED events, which
+     * carry "estimatedMinutes/actualMinutes" for the estimate-calibration
+     * feature. Null for every other outcome.
+     */
+    val detail: String? = null,
 )

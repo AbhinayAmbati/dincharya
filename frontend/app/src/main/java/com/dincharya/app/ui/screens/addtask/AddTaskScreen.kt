@@ -79,7 +79,7 @@ fun AddTaskScreen(navController: NavController) {
         ChipRow(
             options = TaskCategory.entries.map { it.label },
             selectedIndex = TaskCategory.entries.indexOf(viewModel.category),
-        ) { index -> viewModel.category = TaskCategory.entries[index] }
+        ) { index -> viewModel.selectCategory(TaskCategory.entries[index]) }
         Spacer(Modifier.height(24.dp))
 
         // ---- Priority ----
@@ -164,14 +164,14 @@ fun AddTaskScreen(navController: NavController) {
                     label = stringResource(R.string.add_hour),
                     value = viewModel.hour,
                     range = 0..23,
-                    onChange = { viewModel.hour = it },
+                    onChange = { viewModel.setHour(it) },
                 )
                 Text(":", style = MaterialTheme.typography.titleLarge)
                 Stepper(
                     label = stringResource(R.string.add_minute),
                     value = viewModel.minute,
                     range = 0..59 step 5,
-                    onChange = { viewModel.minute = it },
+                    onChange = { viewModel.setMinute(it) },
                 )
             }
         }

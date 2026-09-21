@@ -40,6 +40,10 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isCompleted = 0 ORDER BY scheduledAt IS NULL, scheduledAt ASC")
     suspend fun pendingOnce(): List<TaskEntity>
 
+    /** Every task, pending and completed — the habit-strength view of the world. */
+    @Query("SELECT * FROM tasks")
+    suspend fun allOnce(): List<TaskEntity>
+
     /**
      * The pending occurrence a completed recurring task spawned (if any).
      * Used by undo: deleting it rolls the habit chain back one step.

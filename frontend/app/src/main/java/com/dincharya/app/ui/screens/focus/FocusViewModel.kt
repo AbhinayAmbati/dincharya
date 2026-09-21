@@ -116,10 +116,18 @@ class FocusViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** Mark the focused task complete; cancel its reminder. */
+    /**
+     * Mark the focused task complete; cancel its reminder. The time actually
+     * spent in the session is recorded against the task's estimate — the
+     * raw material for "you take 2x longer than you think" on Insights.
+     */
     fun completeSelected(onDone: () -> Unit) {
         val task = selectedTask ?: return
+        val focusedMinutes = (totalSeconds - remainingSeconds) / 60
         viewModelScope.launch {
+            if (focusedMinutes >= 1) {
+                Graph.repository.logFocused(task, task.estimatedMinutes, focusedMinutes)
+            }
             Graph.repository.completeTask(task)
             ReminderScheduler.cancel(getApplication(), task.id)
             onDone()

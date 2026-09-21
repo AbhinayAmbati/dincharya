@@ -160,6 +160,11 @@
     <string name="insights_weekly_line">You completed %1$d tasks, snoozed %2$d times, and %3$d are still pending.</string>
     <string name="insights_heatmap">Consistency</string>
     <string name="insights_heatmap_hint">One square per day — darker means more completed.</string>
+    <string name="insights_rhythm">Your rhythm</string>
+    <string name="insights_habits">Habits</string>
+    <string name="insights_habits_hint">How automatic your recurring habits have become, over the last 30 days.</string>
+    <string name="insights_calibration">Estimates vs reality</string>
+    <string name="insights_calibration_line">You take about %1$s× as long as you estimate for %2$s tasks.</string>
 
     <string name="notif_action_snooze_10">10 min</string>
     <string name="notif_action_snooze_60">1 hour</string>

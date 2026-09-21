@@ -67,4 +67,11 @@ enum class EventOutcome {
 
     /** The user moved the task to a different time. */
     RESCHEDULED,
+
+    /**
+     * A focus session ended by completing the task. Carries
+     * "estimatedMinutes/actualMinutes" in the event's detail field — the
+     * raw material for the estimate-calibration statistic.
+     */
+    FOCUSED,
 }

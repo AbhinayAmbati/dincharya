@@ -66,6 +66,33 @@ class AddTaskViewModel(
     var hour by mutableStateOf(9)
     var minute by mutableStateOf(0)
 
+    /** True once the user touched the time steppers — stops rhythm-based pre-fills from overriding their choice. */
+    private var timeTouched = false
+
+    /** Selecting a category also suggests that category's usual hour —
+     *  "you schedule Health around 18:30" — until the user takes over. */
+    fun selectCategory(c: TaskCategory) {
+        category = c
+        if (timeTouched) return
+        viewModelScope.launch {
+            val events = Graph.repository.allEvents()
+            val categoryHour = com.dincharya.app.learning.RhythmProfile
+                .bestHour(events.filter { it.category == c.name })
+                ?: com.dincharya.app.learning.RhythmProfile.bestHour(events)
+            categoryHour?.let { hour = it }
+        }
+    }
+
+    fun setHour(value: Int) {
+        hour = value
+        timeTouched = true
+    }
+
+    fun setMinute(value: Int) {
+        minute = value
+        timeTouched = true
+    }
+
     /** Duration presets shown as chips on the screen. */
     val durationOptions = listOf(15, 30, 45, 60, 90, 120)
 
@@ -101,6 +128,12 @@ class AddTaskViewModel(
             // A title shared from another app ("share to Dincharya") seeds the form.
             app.getSharedTaskTitle()?.let {
                 title = it
+            }
+            // New tasks default to the user's golden hour, when one is known.
+            viewModelScope.launch {
+                com.dincharya.app.learning.RhythmProfile
+                    .bestHour(Graph.repository.allEvents())
+                    ?.let { hour = it }
             }
             loaded = true
         }
