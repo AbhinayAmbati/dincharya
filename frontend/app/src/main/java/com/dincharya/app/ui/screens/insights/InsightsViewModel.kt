@@ -191,7 +191,7 @@ class InsightsViewModel(app: Application) : AndroidViewModel(app) {
      * Consecutive days with at least one completion, counting back from
      * today (or yesterday — a streak survives until the day is over).
      */
-    private fun currentStreak(completionDays: SortedSet<Long>): Int {
+    private fun currentStreak(completionDays: Set<Long>): Int {
         if (completionDays.isEmpty()) return 0
         var day = dayStartOf(System.currentTimeMillis())
         // Today not done yet (or the day just started) — the streak counts
@@ -206,7 +206,7 @@ class InsightsViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** One cell per day for the last [days] days, oldest first. */
-    private fun heatmapCells(completionDays: SortedSet<Long>, days: Int): List<HeatCell> {
+    private fun heatmapCells(completionDays: Set<Long>, days: Int): List<HeatCell> {
         val today = dayStartOf(System.currentTimeMillis())
         val firstDay = today - (days - 1) * 24L * 60 * 60 * 1000
         return (0 until days).map { offset ->
