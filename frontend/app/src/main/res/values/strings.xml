@@ -12,6 +12,13 @@
     <!-- Today screen -->
     <string name="today_header">Your day</string>
     <string name="today_empty">Nothing scheduled yet. Add your first task with the + button.</string>
+    <string name="today_plan_button">Plan my day</string>
+    <string name="today_plan_title">A plan for the rest of today</string>
+    <string name="today_plan_accept">Accept plan</string>
+    <string name="today_plan_discard">Discard</string>
+    <string name="today_plan_nothing">Nothing to plan. Everything already has its time.</string>
+    <string name="today_plan_not_enough_day">Not enough day left to plan these honestly.</string>
+    <string name="today_plan_unplaced">%1$d did not fit before 22:00.</string>
     <string name="section_overdue">Overdue</string>
     <string name="section_upcoming">Today</string>
     <string name="section_anytime">Anytime</string>

@@ -8,6 +8,9 @@ import com.dincharya.app.data.TaskEntity
 import com.dincharya.app.data.TaskEventEntity
 import com.dincharya.app.learning.Adaptation
 import com.dincharya.app.learning.AdaptationEngine
+import com.dincharya.app.learning.DayPlan
+import com.dincharya.app.learning.DayPlanner
+import com.dincharya.app.R
 import com.dincharya.app.notifications.ReminderScheduler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +41,12 @@ data class TodayUiState(
     val anytime: List<TaskEntity> = emptyList(),
     val completedToday: List<TaskEntity> = emptyList(),
     val suggestions: Map<Long, Adaptation> = emptyMap(),
+
+    /** The "Plan my day" proposal under review, or null when hidden. */
+    val dayPlan: DayPlan? = null,
+
+    /** Transient note shown where the plan would be (resource id). */
+    val planMessage: Int? = null,
 )
 
 /**
@@ -55,8 +64,14 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
 
     private val dayWindow = MutableStateFlow(currentWindow())
 
-    /** Dismissed suggestion ids so "Keep" is sticky for the session. */
-    private val dismissedSuggestions = MutableStateFlow<Set<Long>>(emptySet())
+    /** Session-scoped UI extras: dismissed suggestions + the day plan. */
+    private data class UiExtras(
+        val dismissed: Set<Long> = emptySet(),
+        val plan: DayPlan? = null,
+        val planMessage: Int? = null,
+    )
+
+    private val extras = MutableStateFlow(UiExtras())
 
     /** Event log snapshot, refreshed whenever the pending list changes. */
     private val eventLog = MutableStateFlow<List<TaskEventEntity>>(emptyList())
@@ -77,9 +92,9 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
                 repository.completedBetween(window.start, window.end)
             },
             eventLog,
-            dismissedSuggestions,
-        ) { pending, window, completed, events, dismissed ->
-            buildState(pending, completed, events, dismissed, window)
+            extras,
+        ) { pending, window, completed, events, uiExtras ->
+            buildState(pending, completed, events, uiExtras, window)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -110,7 +125,7 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
         pending: List<TaskEntity>,
         completed: List<TaskEntity>,
         events: List<TaskEventEntity>,
-        dismissed: Set<Long>,
+        uiExtras: UiExtras,
         window: DayWindow,
     ): TodayUiState {
         val now = System.currentTimeMillis()
@@ -127,7 +142,7 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
         // ones — future occurrences stay out of sight and out of the way.
         val visible = overdue + missedToday + upcoming + anytime
         val suggestions = visible
-            .filter { it.id !in dismissed }
+            .filter { it.id !in uiExtras.dismissed }
             .mapNotNull { task -> AdaptationEngine.evaluate(task, events)?.let { task.id to it } }
             .toMap()
 
@@ -138,6 +153,8 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
             anytime = anytime,
             completedToday = completed,
             suggestions = suggestions,
+            dayPlan = uiExtras.plan,
+            planMessage = uiExtras.planMessage,
         )
     }
 
@@ -184,6 +201,81 @@ class TodayViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Dismiss ("Keep") a suggestion for this session. */
     fun dismissSuggestion(taskId: Long) {
-        dismissedSuggestions.value = dismissedSuggestions.value + taskId
+        extras.value = extras.value.copy(dismissed = extras.value.dismissed + taskId)
+    }
+
+    // ---- Plan my day ----
+
+    /**
+     * Generate a plan for the rest of today: overdue and anytime tasks
+     * laid across the free windows, scored by the on-device model.
+     */
+    fun generateDayPlan() {
+        val snapshot = uiState.value
+        viewModelScope.launch {
+            val events = repository.allEvents()
+            val plan = DayPlanner.plan(
+                now = System.currentTimeMillis(),
+                events = events,
+                overdue = snapshot.overdue,
+                upcoming = snapshot.upcoming,
+                anytime = snapshot.anytime,
+            )
+            val message = when {
+                snapshot.overdue.isEmpty() && snapshot.anytime.isEmpty() ->
+                    R.string.today_plan_nothing
+                plan.items.isEmpty() -> R.string.today_plan_not_enough_day
+                else -> null
+            }
+            extras.value = extras.value.copy(plan = plan, planMessage = message)
+        }
+    }
+
+    /** Nudge one planned item by [deltaMinutes] (clamped inside today). */
+    fun nudgePlanItem(taskId: Long, deltaMinutes: Int) {
+        val plan = extras.value.plan ?: return
+        val now = System.currentTimeMillis()
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 45)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val latest = cal.timeInMillis
+        val items = plan.items.map { item ->
+            if (item.taskId != taskId) item
+            else item.copy(
+                startAt = (item.startAt + deltaMinutes * 60_000L)
+                    .coerceIn(now + DayPlanner.STEP_MINUTES * 60_000L, latest)
+            )
+        }
+        extras.value = extras.value.copy(plan = plan.copy(items = items))
+    }
+
+    /** Drop one task from the plan; the task itself is left untouched. */
+    fun removePlanItem(taskId: Long) {
+        val plan = extras.value.plan ?: return
+        val items = plan.items.filterNot { it.taskId == taskId }
+        extras.value = extras.value.copy(
+            plan = if (items.isEmpty()) null else plan.copy(items = items),
+        )
+    }
+
+    /** Accept: every planned task is moved to its slot, reminders rebooked. */
+    fun acceptPlan() {
+        val plan = extras.value.plan ?: return
+        viewModelScope.launch {
+            val pendingById = repository.pendingTasksOnce().associateBy { it.id }
+            plan.items.forEach { item ->
+                val task = pendingById[item.taskId] ?: return@forEach
+                repository.rescheduleTask(task, item.startAt)
+                ReminderScheduler.cancel(getApplication(), task.id)
+                ReminderScheduler.schedule(getApplication(), task.id, item.startAt)
+            }
+            extras.value = extras.value.copy(plan = null, planMessage = null)
+        }
+    }
+
+    /** Discard the plan; nothing moves. */
+    fun discardPlan() {
+        extras.value = extras.value.copy(plan = null, planMessage = null)
     }
 }

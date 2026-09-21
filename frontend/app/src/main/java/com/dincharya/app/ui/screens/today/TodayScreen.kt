@@ -16,6 +16,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -42,6 +43,8 @@ import com.dincharya.app.ui.components.SectionHeader
 import com.dincharya.app.ui.components.TaskRow
 import com.dincharya.app.ui.navigation.Screen
 import com.dincharya.app.ui.navigation.editRoute
+import com.dincharya.app.learning.PlannedTask
+import java.util.Calendar
 
 /**
  * The Today screen — the app's home.
@@ -102,6 +105,34 @@ fun TodayScreen(navController: NavController) {
                 MomentumBar(completed = state.completedToday.size, total = state.completedToday.size + state.overdue.size + state.upcoming.size)
             }
             Spacer(Modifier.height(12.dp))
+        }
+
+        // ---- Plan my day ----
+        if (state.dayPlan == null) {
+            Spacer(Modifier.height(4.dp))
+            OutlinedButton(
+                onClick = viewModel::generateDayPlan,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.today_plan_button))
+            }
+            state.planMessage?.let { message ->
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    stringResource(message),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        state.dayPlan?.let { plan ->
+            PlanCard(
+                plan = plan,
+                onAccept = viewModel::acceptPlan,
+                onDiscard = viewModel::discardPlan,
+                onNudge = viewModel::nudgePlanItem,
+                onRemove = viewModel::removePlanItem,
+            )
         }
 
         // ---- Task list ----
@@ -231,6 +262,81 @@ private fun SuggestionCard(
                 }
             }
         }
+    }
+}
+
+/**
+ * The "Plan my day" review card: every proposed placement with its slot,
+ * its honest duration and its reason, nudgeable by 15 minutes or removable
+ * one by one before anything is accepted. Nothing moves until Accept.
+ */
+@Composable
+private fun PlanCard(
+    plan: com.dincharya.app.learning.DayPlan,
+    onAccept: () -> Unit,
+    onDiscard: () -> Unit,
+    onNudge: (Long, Int) -> Unit,
+    onRemove: (Long) -> Unit,
+) {
+    RuleCard(Modifier.padding(vertical = 12.dp)) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.today_plan_title),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onDiscard) {
+                    Text(stringResource(R.string.today_plan_discard))
+                }
+            }
+            plan.items.forEach { item ->
+                PlanRow(item = item, onNudge = onNudge, onRemove = onRemove)
+            }
+            if (plan.unplaced.isNotEmpty()) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.today_plan_unplaced, plan.unplaced.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+            Button(onClick = onAccept, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.today_plan_accept))
+            }
+        }
+    }
+}
+
+/** One planned slot: time, task, duration and reason, with nudge and remove. */
+@Composable
+private fun PlanRow(
+    item: PlannedTask,
+    onNudge: (Long, Int) -> Unit,
+    onRemove: (Long) -> Unit,
+) {
+    val time = remember(item.startAt) {
+        val cal = Calendar.getInstance().apply { timeInMillis = item.startAt }
+        "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 4.dp),
+    ) {
+        Text(time, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(item.title, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                item.reason + "  ·  " + item.durationMinutes + " min",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        TextButton(onClick = { onNudge(item.taskId, -15) }) { Text("−") }
+        TextButton(onClick = { onNudge(item.taskId, 15) }) { Text("+") }
+        TextButton(onClick = { onRemove(item.taskId) }) { Text("×") }
     }
 }
 
